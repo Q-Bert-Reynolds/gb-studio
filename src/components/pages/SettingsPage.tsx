@@ -45,6 +45,9 @@ import { ColorModeSelect } from "components/forms/ColorModeSelect";
 import { CompilerPresetSelect } from "components/forms/CompilerPresetSelect";
 import { DMGPalettePicker } from "components/forms/DMGPalettePicker";
 import type { MonoPalette } from "shared/lib/entities/entitiesTypes";
+import { CollisionSetting } from "shared/lib/resources/types";
+import { defaultCollisionSettings } from "consts";
+import { CollisionLayerPicker } from "components/forms/CollisionLayerPicker";
 
 const SettingsPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -231,6 +234,38 @@ const SettingsPage: FC = () => {
     [defaultSpritePaletteIds, editSettings]
   );
 
+  const collisionSettings = settings.collisionSettings ?? defaultCollisionSettings;
+  const getDefaultCollisionNames = (key: string) => {
+    switch(key) {
+      case "solid": return l10n("FIELD_SOLID");
+      case "top": return l10n("FIELD_COLLISION_TOP");
+      case "bottom": return l10n("FIELD_COLLISION_BOTTOM");
+      case "left": return l10n("FIELD_COLLISION_LEFT");
+      case "right": return l10n("FIELD_COLLISION_RIGHT");
+      case "ladder": return l10n("FIELD_LADDER");
+      case "slope_45_right": return l10n("FIELD_COLLISION_SLOPE_45_RIGHT");
+      case "slope_45_left": return l10n("FIELD_COLLISION_SLOPE_45_LEFT");
+      case "slope_22_right_bot": return l10n("FIELD_COLLISION_SLOPE_22_RIGHT_BOT");
+      case "slope_22_right_top": return l10n("FIELD_COLLISION_SLOPE_22_RIGHT_TOP");
+      case "slope_22_left_top": return l10n("FIELD_COLLISION_SLOPE_22_LEFT_TOP");
+      case "slope_22_left_bot": return l10n("FIELD_COLLISION_SLOPE_22_LEFT_BOT");
+      case "spare_08": return l10n("FIELD_COLLISION_SPARE", { tile: 8 });
+      case "spare_09": return l10n("FIELD_COLLISION_SPARE", { tile: 9 });
+      case "spare_10": return l10n("FIELD_COLLISION_SPARE", { tile: 10 });
+      case "spare_11": return l10n("FIELD_COLLISION_SPARE", { tile: 11 });
+      case "spare_12": return l10n("FIELD_COLLISION_SPARE", { tile: 12 });
+      case "spare_13": return l10n("FIELD_COLLISION_SPARE", { tile: 13 });
+      case "spare_14": return l10n("FIELD_COLLISION_SPARE", { tile: 14 });
+      case "spare_15": return l10n("FIELD_COLLISION_SPARE", { tile: 15 });
+      default: return "";
+    }
+  };
+
+  const onEditCollisionSetting = useCallback((setting: CollisionSetting) =>   
+    editSettings({ collisionSettings: collisionSettings.map(s => s.key == setting.key ? setting : s) }),
+    [defaultSpritePaletteIds, editSettings, collisionSettings]
+  );
+
   const onEditDefaultPlayerSprites = useCallback(
     (sceneType: string, spriteSheetId: string) => {
       console.log("onEditDefaultPlayerSprites", sceneType, spriteSheetId);
@@ -286,6 +321,9 @@ const SettingsPage: FC = () => {
             </SettingsMenuItem>
             <SettingsMenuItem onClick={onMenuItem("settingsMusic")}>
               {l10n("SETTINGS_MUSIC")}
+            </SettingsMenuItem>
+            <SettingsMenuItem onClick={onMenuItem("settingsCollisions")}>
+              {l10n("SETTINGS_COLLISIONS")}
             </SettingsMenuItem>
             {groupedFields.map((group) => (
               <SettingsMenuItem
@@ -701,6 +739,33 @@ const SettingsPage: FC = () => {
                   <FormInfo>{l10n("FIELD_GBT_PLAYER_NOTE")}</FormInfo>
                 )}
               </FormField>
+            </SettingRowInput>
+          </SearchableSettingRow>
+        </SearchableCard>
+
+        <SearchableCard
+          searchTerm={searchTerm}
+          searchMatches={[l10n("SETTINGS_COLLISIONS")]}
+        >
+          <CardAnchor id="settingsCollisions" />
+          <CardHeading>{l10n("SETTINGS_COLLISIONS")}</CardHeading>
+
+          <SearchableSettingRow
+            searchTerm={searchTerm}
+            searchMatches={["Tile Collision Layers"]}
+          >
+            <SettingRowLabel>Tile Collision Layers</SettingRowLabel>
+            <SettingRowInput>
+            <div>
+              {collisionSettings.map((setting) => (
+                <CollisionLayerPicker 
+                  name={((setting.name && setting.name.trim().length > 0) ? setting.name : (getDefaultCollisionNames(setting.key)))}
+                  layer={setting}
+                  onChange={onEditCollisionSetting}
+                >
+                </CollisionLayerPicker>
+              ))}
+            </div>
             </SettingRowInput>
           </SearchableSettingRow>
         </SearchableCard>

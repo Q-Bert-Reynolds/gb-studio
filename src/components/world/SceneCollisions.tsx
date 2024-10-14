@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   COLLISION_TOP,
   COLLISION_ALL,
@@ -15,6 +15,7 @@ import {
   COLLISION_SLOPE_22_LEFT_BOT,
   COLLISIONS_EXTRA_SYMBOLS,
 } from "consts";
+import { useAppSelector } from "store/hooks";
 
 const TILE_SIZE = 8;
 
@@ -31,15 +32,139 @@ const SceneCollisions = ({
 }: SceneCollisionsProps) => {
   const canvas = useRef<HTMLCanvasElement>(null);
 
+  const collisionAlpha = useAppSelector(
+    (state) => Math.floor(state.project.present.settings.collisionLayerAlpha) / 255
+  );
+
+  const collisionSettings = useAppSelector(
+    (state) => state.project.present.settings.collisionSettings
+  );
+
+  const solidColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "solid");
+      return setting ? setting.color : "#FA2828FF";
+    }, 
+    [collisionSettings, collisionAlpha]
+  );
+
+  const topColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "top");
+      return setting ? setting.color : "#2828FAFF";
+    }, 
+    [collisionSettings, collisionAlpha]
+  );
+
+  const bottomColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "bottom");
+      return setting ? setting.color : "#FFFA28FF";
+    }, 
+    [collisionSettings, collisionAlpha]
+  );
+
+  const leftColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "left");
+      return setting ? setting.color : "#FA28FAFF";
+    }, 
+    [collisionSettings, collisionAlpha]
+  );
+
+  const rightColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "right");
+      return setting ? setting.color : "#28FAFAFF";
+    }, 
+    [collisionSettings, collisionAlpha]
+  );
+
+  const ladderColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "ladder");
+      return setting ? setting.color : "#008000FF";
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const slopeColor = "#0000FFFF";
+  const slope45RightColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "slope_45_right");
+      return setting ? setting.color : slopeColor;
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const slope45LeftColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "slope_45_left");
+      return setting ? setting.color : slopeColor;
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const slope22RightBotColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "slope_22_right_bot");
+      return setting ? setting.color : slopeColor;
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const slope22RightTopColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "slope_22_right_top");
+      return setting ? setting.color : slopeColor;
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const slope22LeftTopColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "slope_22_left_top");
+      return setting ? setting.color : slopeColor;
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const slope22LeftBotColor = useMemo(
+    () => {
+      const setting = collisionSettings.find(s => s.key == "slope_22_left_bot");
+      return setting ? setting.color : slopeColor;
+    },
+    [collisionSettings, collisionAlpha]
+  );
+
+  const spareColors = useMemo(
+    () => ["08","09","10","11","12","13","14","15"].map(i => {
+      const setting = collisionSettings.find(s => s.key == ("spare_"+i));
+      return setting ? setting.color : "#00800080";
+    }),
+    [collisionSettings, collisionAlpha]
+  );
+
+  const spareSymbols = useMemo(
+    () => ["08","09","10","11","12","13","14","15"].map(i => {
+      const setting = collisionSettings.find(s => s.key == ("spare_"+i));
+      return setting && setting.name ? setting.name[0] : COLLISIONS_EXTRA_SYMBOLS[+i-8];
+    }),
+    [collisionSettings, collisionAlpha]
+  );
+
+
   useEffect(() => {
     if (canvas.current) {
       // eslint-disable-next-line no-self-assign
       canvas.current.width = canvas.current.width; // Clear canvas
       const ctx = canvas.current.getContext("2d");
-
+      
       if (!ctx) return;
-
+      
       ctx.font = "8px Public Pixel";
+      ctx.globalCompositeOperation = "screen";
+      ctx.globalAlpha =  collisionAlpha;
 
       for (let yi = 0; yi < height; yi++) {
         for (let xi = 0; xi < width; xi++) {
@@ -47,42 +172,42 @@ const SceneCollisions = ({
           const tile = collisions[collisionIndex];
           const tileprop = tile & TILE_PROPS;
           if ((tile & COLLISION_ALL) === COLLISION_ALL) {
-            ctx.fillStyle = "rgba(250,40,40,0.6)";
+            ctx.fillStyle = solidColor;
             ctx.fillRect(xi * TILE_SIZE, yi * TILE_SIZE, TILE_SIZE, TILE_SIZE);
           } else if (tile !== 0) {
             if (tile & COLLISION_TOP) {
-              ctx.fillStyle = "rgba(40,40,250,0.6)";
+              ctx.fillStyle = topColor;
               ctx.fillRect(
                 xi * TILE_SIZE,
                 yi * TILE_SIZE,
                 TILE_SIZE,
-                TILE_SIZE * 0.4
+                TILE_SIZE * 0.5
               );
             }
             if (tile & COLLISION_BOTTOM) {
-              ctx.fillStyle = "rgba(255,250,40,0.6)";
+              ctx.fillStyle = bottomColor;
               ctx.fillRect(
                 xi * TILE_SIZE,
-                (yi + 0.6) * TILE_SIZE,
+                (yi + .5) * TILE_SIZE,
                 TILE_SIZE,
-                TILE_SIZE * 0.4
+                TILE_SIZE * 0.5
               );
             }
             if (tile & COLLISION_LEFT) {
-              ctx.fillStyle = "rgba(250,40,250,0.6)";
+              ctx.fillStyle = leftColor;
               ctx.fillRect(
                 xi * TILE_SIZE,
                 yi * TILE_SIZE,
-                TILE_SIZE * 0.4,
+                TILE_SIZE * 0.5,
                 TILE_SIZE
               );
             }
             if (tile & COLLISION_RIGHT) {
-              ctx.fillStyle = "rgba(40,250,250,0.6)";
+              ctx.fillStyle = rightColor;
               ctx.fillRect(
-                (xi + 0.6) * TILE_SIZE,
+                (xi + 0.5) * TILE_SIZE,
                 yi * TILE_SIZE,
-                TILE_SIZE * 0.4,
+                TILE_SIZE * 0.5,
                 TILE_SIZE
               );
             }
@@ -90,7 +215,7 @@ const SceneCollisions = ({
           if (tileprop) {
             switch (tileprop) {
               case TILE_PROP_LADDER: // Ladder
-                ctx.fillStyle = "rgba(0,128,0,0.6)";
+                ctx.fillStyle = ladderColor
                 ctx.fillRect(
                   (xi + 0.0) * TILE_SIZE,
                   yi * TILE_SIZE,
@@ -111,76 +236,65 @@ const SceneCollisions = ({
                 );
                 break;
               case COLLISION_SLOPE_45_RIGHT: // slope right
-                ctx.strokeStyle = "rgba(0,0,255,0.6)";
+                ctx.fillStyle = slope45RightColor;
                 ctx.beginPath();
                 ctx.moveTo((xi + 0) * TILE_SIZE, (yi + 1) * TILE_SIZE);
                 ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 0) * TILE_SIZE);
-                ctx.stroke(); // Render the path
+                ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 1) * TILE_SIZE);
+                ctx.fill(); // Render the path
                 break;
               case COLLISION_SLOPE_22_RIGHT_BOT: // slope right shalow BOT
-                ctx.strokeStyle = "rgba(0,0,255,0.6)";
+                ctx.fillStyle = slope22RightBotColor;
                 ctx.beginPath();
                 ctx.moveTo((xi + 0) * TILE_SIZE, (yi + 1) * TILE_SIZE);
                 ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 0.5) * TILE_SIZE);
-                ctx.stroke(); // Render the path
+                ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 1) * TILE_SIZE);
+                ctx.fill(); // Render the path
                 break;
               case COLLISION_SLOPE_22_RIGHT_TOP: // slope right shalow TOP
-                ctx.strokeStyle = "rgba(0,0,255,0.6)";
+                ctx.fillStyle = slope22RightTopColor;
                 ctx.beginPath();
                 ctx.moveTo((xi + 0) * TILE_SIZE, (yi + 0.5) * TILE_SIZE);
                 ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 0) * TILE_SIZE);
-                ctx.stroke(); // Render the path
+                ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 0.5) * TILE_SIZE);
+                ctx.fill(); // Render the path
                 break;
               case COLLISION_SLOPE_45_LEFT: // slope left
-                ctx.strokeStyle = "rgba(0,0,255,0.6)";
+                ctx.fillStyle = slope45LeftColor;
                 ctx.beginPath();
                 ctx.moveTo((xi + 0) * TILE_SIZE, (yi + 0) * TILE_SIZE);
                 ctx.lineTo((xi + 1) * TILE_SIZE, (yi + 1) * TILE_SIZE);
-                ctx.stroke(); // Render the path
+                ctx.lineTo((xi + 0) * TILE_SIZE, (yi + 1) * TILE_SIZE);
+                ctx.fill(); // Render the path
                 break;
               case COLLISION_SLOPE_22_LEFT_BOT: // slope left shalow BOT
-                ctx.strokeStyle = "rgba(0,0,255,0.6)";
+                ctx.fillStyle = slope22LeftBotColor;
                 ctx.beginPath();
                 ctx.moveTo((xi + 1) * TILE_SIZE, (yi + 1) * TILE_SIZE);
                 ctx.lineTo((xi + 0) * TILE_SIZE, (yi + 0.5) * TILE_SIZE);
-                ctx.stroke(); // Render the path
+                ctx.lineTo((xi + 0) * TILE_SIZE, (yi + 1) * TILE_SIZE);
+                ctx.fill(); // Render the path
                 break;
               case COLLISION_SLOPE_22_LEFT_TOP: // slope left shalow TOP
-                ctx.strokeStyle = "rgba(0,0,255,0.6)";
+                ctx.fillStyle = slope22LeftTopColor;
                 ctx.beginPath();
                 ctx.moveTo((xi + 1) * TILE_SIZE, (yi + 0.5) * TILE_SIZE);
                 ctx.lineTo((xi + 0) * TILE_SIZE, (yi + 0) * TILE_SIZE);
-                ctx.stroke(); // Render the path
+                ctx.lineTo((xi + 0) * TILE_SIZE, (yi + 0.5) * TILE_SIZE);
+                ctx.fill(); // Render the path
                 break;
               default:
-                const tilepropValue = (tileprop >> 4) - 7;
-                switch (tilepropValue) {
-                  case 1:
-                  case 2:
-                    ctx.fillStyle = `rgba(0,128,0,0.5)`;
-                    break;
-                  case 3:
-                  case 4:
-                    ctx.fillStyle = `rgba(128,0,0,0.5)`;
-                    break;
-                  case 5:
-                  case 6:
-                    ctx.fillStyle = `rgba(0,0,128,0.5)`;
-                    break;
-                  case 7:
-                  case 8:
-                    ctx.fillStyle = `rgba(128,0,128,0.5)`;
-                    break;
-                }
+                const tilepropValue = (tileprop >> 4) - 8;
+                ctx.fillStyle = spareColors[tilepropValue];
                 ctx.fillRect(
                   xi * TILE_SIZE,
                   yi * TILE_SIZE,
                   TILE_SIZE,
                   TILE_SIZE
                 );
-                ctx.fillStyle = "rgba(255,255,255,0.9)";
+                ctx.fillStyle = "#FFFFFF40";
                 ctx.fillText(
-                  COLLISIONS_EXTRA_SYMBOLS[tilepropValue - 1],
+                  spareSymbols[tilepropValue],
                   xi * TILE_SIZE,
                   (yi + 0.9) * TILE_SIZE
                 );
@@ -190,7 +304,7 @@ const SceneCollisions = ({
         }
       }
     }
-  }, [collisions, height, width]);
+  }, [collisions, height, width, collisionAlpha]);
 
   return (
     <canvas
