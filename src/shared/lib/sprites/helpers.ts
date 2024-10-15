@@ -209,7 +209,7 @@ export const animationMapBySpriteType = <T, U>(
     if (type === "platform_player" && flipLeft) {
       // Left facing maps to previous animation (right) flipped
       // others map in order
-      if (index === 1 || index === 5 || index === 3) {
+      if (index === 1 || index === 5 || index === 3 || index === 7) {
         return fn(items[index - 1], true);
       }
       return fn(items[index], false);
