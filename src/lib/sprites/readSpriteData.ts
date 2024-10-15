@@ -81,7 +81,7 @@ export const optimiseTiles = async (
         tileDef.sliceX,
         tileDef.sliceY,
         8,
-        16
+        8
       );
       if (tileDef.flipX) {
         slicedTile = flipIndexedImageX(slicedTile);
@@ -94,14 +94,14 @@ export const optimiseTiles = async (
         slicedTile,
         mask,
         spriteWidth / 2 - 8 + tileDef.x,
-        spriteHeight - 16 - tileDef.y
+        spriteHeight / 2 - 8 - tileDef.y
       );
 
       mask = blitIndexedImageData(
         mask,
         slicedTile,
         spriteWidth / 2 - 8 + tileDef.x,
-        spriteHeight - 16 - tileDef.y
+        spriteHeight - 8 - tileDef.y
       );
 
       tileLookup[tileDef.id] = allTiles.length;

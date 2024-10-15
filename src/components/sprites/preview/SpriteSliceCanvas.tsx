@@ -109,7 +109,7 @@ export const SpriteSliceCanvas = ({
       ref={canvasRef}
       width={width}
       height={height}
-      style={{ imageRendering: "pixelated" }}
+      style={{ imageRendering: "pixelated", position: "absolute" }}
     />
   );
 };

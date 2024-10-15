@@ -88,7 +88,7 @@ const GridWrapper = styled.div`
 const MetaspriteDraggableTile = styled.div<MetaspriteDraggableTileProps>`
   position: absolute;
   width: 8px;
-  height: 16px;
+  height: 8px;
 
   &:hover:after {
     content: "";
@@ -98,7 +98,7 @@ const MetaspriteDraggableTile = styled.div<MetaspriteDraggableTileProps>`
     box-shadow: 0px 0px 0px 1px rgba(255, 0, 0, 0.2) inset;
     z-index: 100;
     width: 8px;
-    height: 16px;
+    height: 8px;
   }
 
   ${(props) =>
@@ -112,7 +112,7 @@ const MetaspriteDraggableTile = styled.div<MetaspriteDraggableTileProps>`
             box-shadow: 0px 0px 0px 1px rgba(255, 0, 0, 0.5) inset;
             z-index: 10;
             width: 8px;
-            height: 16px;
+            height: 8px;
           }
         `
       : ""}
@@ -319,7 +319,7 @@ const MetaspriteEditor = ({
           ),
           y: Math.floor(
             canvasHeight -
-              16 -
+              8 -
               ((e.pageY - bounds.top) / bounds.height) * canvasHeight +
               newTiles.height * 8
           ),
@@ -359,9 +359,9 @@ const MetaspriteEditor = ({
               spriteSheetId,
               metaspriteId,
               x: createOrigin.x + tx * 8,
-              y: createOrigin.y - ty * 16,
+              y: createOrigin.y - ty * 8,
               sliceX: newTiles.x + tx * 8,
-              sliceY: newTiles.y + ty * 16,
+              sliceY: newTiles.y + ty * 8,
               flipX: false,
               flipY: false,
               objPalette: "OBP0",
@@ -487,15 +487,15 @@ const MetaspriteEditor = ({
         const height = Math.abs(selectionOrigin.y - y2);
 
         const canvasX1 = x / zoom - (canvasWidth / 2 - 8);
-        const canvasY1 = canvasHeight - 16 - y / zoom;
+        const canvasY1 = canvasHeight - 8 - y / zoom;
         const canvasX2 = (x + width) / zoom - (canvasWidth / 2 - 8);
-        const canvasY2 = canvasHeight - 16 - (y + height) / zoom;
+        const canvasY2 = canvasHeight - 8 - (y + height) / zoom;
 
         const intersectingTiles = metaspriteTiles.filter(
           (tile) =>
             tile.x + 8 > canvasX1 &&
             tile.x < canvasX2 &&
-            tile.y - 16 < canvasY1 &&
+            tile.y - 8 < canvasY1 &&
             tile.y > canvasY2
         );
         const intersectingTileIds = intersectingTiles.map((tile) => tile.id);
@@ -827,7 +827,7 @@ const MetaspriteEditor = ({
                   offsetX={metaspriteTile.sliceX}
                   offsetY={metaspriteTile.sliceY}
                   width={8}
-                  height={16}
+                  height={8}
                   flipX={metaspriteTile.flipX}
                   flipY={metaspriteTile.flipY}
                   objPalette={metaspriteTile.objPalette}
@@ -839,7 +839,7 @@ const MetaspriteEditor = ({
               <StampTilesWrapper
                 style={{
                   left: createOrigin.x,
-                  top: -createOrigin.y - 16,
+                  top: -createOrigin.y,
                 }}
               >
                 <SpriteSliceCanvas
@@ -847,7 +847,7 @@ const MetaspriteEditor = ({
                   offsetX={newTiles.x}
                   offsetY={newTiles.y}
                   width={newTiles.width * 8}
-                  height={newTiles.height * 16}
+                  height={newTiles.height * 8}
                   flipX={false}
                   flipY={false}
                   objPalette="OBP0"

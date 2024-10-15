@@ -88,7 +88,7 @@ const SpriteTilePalette = ({ id, precisionMode }: SpriteTilePaletteProps) => {
   const snapY = useCallback(
     (offsetY: number): number => {
       return Math.min(
-        height - 16,
+        height - 8,
         Math.max(0, precisionMode ? offsetY - 8 : roundDown8(offsetY))
       );
     },
@@ -168,7 +168,7 @@ const SpriteTilePalette = ({ id, precisionMode }: SpriteTilePaletteProps) => {
         Math.max(
           8,
           offsetY < selectedTiles.y ? 2 : offsetY - selectedTiles.y + 1
-        ) / 16
+        ) / 8
       );
 
       setSelectedTiles({
@@ -297,9 +297,9 @@ const SpriteTilePalette = ({ id, precisionMode }: SpriteTilePaletteProps) => {
                 backgroundImage:
                   zoom >= 8
                     ? `linear-gradient(to right, 
-          #079f1c 1px, transparent 1px, transparent 7px, #efefef 8px, transparent 8px, transparent 15px, #efefef 16px, transparent 16px, transparent 23px, #efefef 24px, transparent 24px, transparent 31px, #efefef 32px, transparent 32px, transparent 39px, #efefef 40px, transparent 40px, transparent 47px, #efefef 48px, transparent 48px, transparent 55px, #efefef 56px, transparent 56px
+          #079f1c 1px, transparent 1px, transparent 7px, #efefef 8px, transparent 8px, transparent 15px, #efefef 8px, transparent 8px, transparent 23px, #efefef 24px, transparent 24px, transparent 31px, #efefef 32px, transparent 32px, transparent 39px, #efefef 40px, transparent 40px, transparent 47px, #efefef 48px, transparent 48px, transparent 55px, #efefef 56px, transparent 56px
           ), linear-gradient(to bottom, 
-          #079f1c 1px, transparent 1px, transparent 7px, #efefef 8px, transparent 8px, transparent 15px, #efefef 16px, transparent 16px, transparent 23px, #efefef 24px, transparent 24px, transparent 31px, #efefef 32px, transparent 32px, transparent 39px, #efefef 40px, transparent 40px, transparent 47px, #efefef 48px, transparent 48px, transparent 55px, #efefef 56px, transparent 56px
+          #079f1c 1px, transparent 1px, transparent 7px, #efefef 8px, transparent 8px, transparent 15px, #efefef 8px, transparent 8px, transparent 23px, #efefef 24px, transparent 24px, transparent 31px, #efefef 32px, transparent 32px, transparent 39px, #efefef 40px, transparent 40px, transparent 47px, #efefef 48px, transparent 48px, transparent 55px, #efefef 56px, transparent 56px
           )`
                     : "linear-gradient(to right, rgba(0,220,0,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,220,0,0.5) 1px, transparent 1px)",
               }}
@@ -311,7 +311,7 @@ const SpriteTilePalette = ({ id, precisionMode }: SpriteTilePaletteProps) => {
                   left: hoverTile.x * zoom,
                   top: hoverTile.y * zoom,
                   width: 8 * zoom,
-                  height: 16 * zoom,
+                  height: 8 * zoom,
                   background: "rgba(0,0,0,0.1)",
                 }}
               />
@@ -323,7 +323,7 @@ const SpriteTilePalette = ({ id, precisionMode }: SpriteTilePaletteProps) => {
                   left: selectedTiles.x * zoom,
                   top: selectedTiles.y * zoom,
                   width: selectedTiles.width * 8 * zoom,
-                  height: selectedTiles.height * 16 * zoom,
+                  height: selectedTiles.height * 8 * zoom,
                   boxShadow: `0px 0px 0px ${zoom}px rgba(255, 0, 0, 0.5)`,
                 }}
               />
