@@ -1,6 +1,4 @@
 import styled, { css } from "styled-components";
-import { COLLISIONS_EXTRA_SYMBOLS } from "consts";
-
 
 interface BrushToolbarBackgroundColorProps {
   $color: string;
@@ -92,8 +90,8 @@ export const BrushToolbarLadderTileIcon = styled.div<BrushToolbarBackgroundColor
     height: 18px;
     margin-left: 2px;
     margin-top: 2px;
-    border-left: 4px solid green;
-    border-right: 4px solid green;
+    border-left: 4px solid ${(props) => props.$color};
+    border-right: 4px solid ${(props) => props.$color};
   }
   &:after {
     position: absolute;
@@ -103,8 +101,8 @@ export const BrushToolbarLadderTileIcon = styled.div<BrushToolbarBackgroundColor
     height: 6px;
     left: 2px;
     top: 4px;
-    border-top: 4px solid green;
-    border-bottom: 4px solid green;
+    border-top: 4px solid ${(props) => props.$color};
+    border-bottom: 4px solid ${(props) => props.$color};
   }
   ${brushToolbarCollisionTileStyles};
 `;
@@ -234,7 +232,6 @@ interface BrushToolbarExtraTileIconProps {
   $color: string;
 }
 
-
 export const BrushToolbarExtraTileIcon = styled.div<BrushToolbarExtraTileIconProps>`
   &:before {
     content: "${(props) => props.$value}";
@@ -248,9 +245,9 @@ export const BrushToolbarExtraTileIcon = styled.div<BrushToolbarExtraTileIconPro
     background-color: ${(props) => props.$color};
     color: ${(props) => {
       const c = props.$color;
-      const a = c.length <= 7 ? 1.0 : Number("0x"+c.slice(7,9)) / 255.0;
-      return a < 0.8 ? c.slice(0,7)+"FF" : "#FFFFFFFF";
-    }}
+      const a = c.length <= 7 ? 1.0 : Number("0x" + c.slice(7, 9)) / 255.0;
+      return a < 0.5 ? c.slice(0, 7) + "80" : "#FFFFFF" + c.slice(7, 9);
+    }};
   }
   ${brushToolbarCollisionTileStyles};
 `;

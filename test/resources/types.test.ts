@@ -1,5 +1,5 @@
 import { Value } from "@sinclair/typebox/value";
-import { defaultCollisionSettings } from "consts";
+import { defaultCollisionTileLabels } from "consts";
 import {
   ActorDirection,
   SceneParallaxLayer,
@@ -568,8 +568,8 @@ describe("TypeBox Schemas", () => {
       showConnections: "all",
       showCollisionSlopeTiles: true,
       showCollisionExtraTiles: true,
-      collisionLayerAlpha: 128,
-      collisionSettings: defaultCollisionSettings,
+      collisionLayerOpacity: 50,
+      collisionTileLabels: defaultCollisionTileLabels,
       worldScrollX: 0,
       worldScrollY: 0,
       zoom: 1,
@@ -647,8 +647,8 @@ describe("TypeBox Schemas", () => {
       startAnimSpeed: null,
       startDirection: "down",
       showCollisions: true,
-      collisionLayerAlpha: 128,
-      collisionSettings: [],
+      collisionLayerOpacity: 50,
+      collisionTileLabels: [],
       showConnections: "all",
       showCollisionSlopeTiles: true,
       showCollisionExtraTiles: true,

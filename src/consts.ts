@@ -1,6 +1,6 @@
 import path from "path";
 import type { Palette } from "shared/lib/entities/entitiesTypes";
-import { CollisionSetting, Settings } from "shared/lib/resources/types";
+import { CollisionTileLabel, Settings } from "shared/lib/resources/types";
 
 const isDist = __dirname.indexOf(".webpack") > -1;
 const isCli = __dirname.indexOf("out/cli") > -1;
@@ -77,9 +77,12 @@ export const TILE_PROP_SLOPE_LEFT = 0x10;
 export const COLLISION_SLOPE_45_RIGHT = TILE_PROP_SLOPE_45;
 export const COLLISION_SLOPE_22_RIGHT_BOT = TILE_PROP_SLOPE_22_BOT;
 export const COLLISION_SLOPE_22_RIGHT_TOP = TILE_PROP_SLOPE_22_TOP;
-export const COLLISION_SLOPE_45_LEFT = TILE_PROP_SLOPE_45 | TILE_PROP_SLOPE_LEFT;
-export const COLLISION_SLOPE_22_LEFT_BOT = TILE_PROP_SLOPE_22_BOT | TILE_PROP_SLOPE_LEFT;
-export const COLLISION_SLOPE_22_LEFT_TOP = TILE_PROP_SLOPE_22_TOP | TILE_PROP_SLOPE_LEFT;
+export const COLLISION_SLOPE_45_LEFT =
+  TILE_PROP_SLOPE_45 | TILE_PROP_SLOPE_LEFT;
+export const COLLISION_SLOPE_22_LEFT_BOT =
+  TILE_PROP_SLOPE_22_BOT | TILE_PROP_SLOPE_LEFT;
+export const COLLISION_SLOPE_22_LEFT_TOP =
+  TILE_PROP_SLOPE_22_TOP | TILE_PROP_SLOPE_LEFT;
 
 export const COLLISION_SLOPE_VALUES = [
   COLLISION_SLOPE_45_RIGHT,
@@ -133,28 +136,28 @@ export const EVENT_GROUP = "EVENT_GROUP";
 
 export const LYC_SYNC_VALUE = 150;
 
-export const defaultCollisionSettings: CollisionSetting[] = [
-  { key: "solid",              color: "#FA2828FF" },
-  { key: "top",                color: "#2828FAFF" },
-  { key: "bottom",             color: "#FFFA28FF" },
-  { key: "left",               color: "#FA28FAFF" },
-  { key: "right",              color: "#28FAFAFF" },
-  { key: "ladder",             color: "#008000FF" },
-  { key: "slope_45_right",     color: "#0000FFFF" },
-  { key: "slope_45_left",      color: "#0000FFFF" },
-  { key: "slope_22_right_bot", color: "#00FF00FF" },
-  { key: "slope_22_right_top", color: "#00FF00FF" },
-  { key: "slope_22_left_top",  color: "#00FF00FF" },
-  { key: "slope_22_left_bot",  color: "#00FF00FF" },
-  { key: "spare_08",           color: "#00800080" },
-  { key: "spare_09",           color: "#00800080" },
-  { key: "spare_10",           color: "#80000080" },
-  { key: "spare_11",           color: "#80000080" },
-  { key: "spare_12",           color: "#00008080" },
-  { key: "spare_13",           color: "#00008080" },
-  { key: "spare_14",           color: "#80008080" },
-  { key: "spare_15",           color: "#80008080" },
-];
+export const defaultCollisionTileLabels: CollisionTileLabel[] = [
+  { "key": "solid", "color": "#FA2828FF", "mask": COLLISION_ALL, "flag": COLLISION_ALL, "name": "FIELD_SOLID" },
+  { "key": "top", "color": "#2828FAFF", "mask": COLLISION_ALL, "flag": COLLISION_TOP, "name": "FIELD_COLLISION_TOP" },
+  { "key": "bottom", "color": "#FFFA28FF", "mask": COLLISION_ALL, "flag": COLLISION_BOTTOM, "name": "FIELD_COLLISION_BOTTOM" },
+  { "key": "left", "color": "#FA28FAFF", "mask": COLLISION_ALL, "flag": COLLISION_LEFT, "name": "FIELD_COLLISION_LEFT" },
+  { "key": "right", "color": "#28FAFAFF", "mask": COLLISION_ALL, "flag": COLLISION_RIGHT, "name": "FIELD_COLLISION_RIGHT" },
+  { "key": "ladder", "color": "#008000FF", "mask": TILE_PROPS, "flag": TILE_PROP_LADDER, "name": "FIELD_LADDER" },
+  { "key": "slope_45_right", "color": "#0000FFFF", "mask": 0xFF, "flag": COLLISION_SLOPE_45_RIGHT | COLLISION_BOTTOM | COLLISION_RIGHT, "name": "FIELD_COLLISION_SLOPE_45_RIGHT" },
+  { "key": "slope_45_left", "color": "#0000FFFF", "mask": 0xFF, "flag": COLLISION_SLOPE_45_LEFT | COLLISION_BOTTOM | COLLISION_LEFT, "name": "FIELD_COLLISION_SLOPE_45_LEFT" },
+  { "key": "slope_22_right_bot", "color": "#0000FFFF", "mask": 0xFF, "flag": COLLISION_SLOPE_22_RIGHT_BOT | COLLISION_BOTTOM, "name": "FIELD_COLLISION_SLOPE_22_RIGHT_BOT" },
+  { "key": "slope_22_right_top", "color": "#0000FFFF", "mask": 0xFF, "flag": COLLISION_SLOPE_22_RIGHT_TOP | COLLISION_BOTTOM | COLLISION_RIGHT, "name": "FIELD_COLLISION_SLOPE_22_RIGHT_TOP" },
+  { "key": "slope_22_left_top", "color": "#0000FFFF", "mask": 0xFF, "flag": COLLISION_SLOPE_22_LEFT_TOP | COLLISION_BOTTOM | COLLISION_LEFT, "name": "FIELD_COLLISION_SLOPE_22_LEFT_TOP" },
+  { "key": "slope_22_left_bot", "color": "#0000FFFF", "mask": 0xFF, "flag": COLLISION_SLOPE_22_LEFT_BOT | COLLISION_BOTTOM, "name": "FIELD_COLLISION_SLOPE_22_LEFT_BOT" },
+  { "key": "spare_08", "color": "#00800080", "mask": TILE_PROPS, "flag": 0x80, "name": "FIELD_COLLISION_SPARE", "icon": "8" },
+  { "key": "spare_09", "color": "#00800080", "mask": TILE_PROPS, "flag": 0x90, "name": "FIELD_COLLISION_SPARE", "icon": "9" },
+  { "key": "spare_10", "color": "#80000080", "mask": TILE_PROPS, "flag": 0xA0, "name": "FIELD_COLLISION_SPARE", "icon": "A" },
+  { "key": "spare_11", "color": "#80000080", "mask": TILE_PROPS, "flag": 0xB0, "name": "FIELD_COLLISION_SPARE", "icon": "B" },
+  { "key": "spare_12", "color": "#00008080", "mask": TILE_PROPS, "flag": 0xC0, "name": "FIELD_COLLISION_SPARE", "icon": "C" },
+  { "key": "spare_13", "color": "#00008080", "mask": TILE_PROPS, "flag": 0xD0, "name": "FIELD_COLLISION_SPARE", "icon": "D" },
+  { "key": "spare_14", "color": "#80008080", "mask": TILE_PROPS, "flag": 0xE0, "name": "FIELD_COLLISION_SPARE", "icon": "E" },
+  { "key": "spare_15", "color": "#80008080", "mask": TILE_PROPS, "flag": 0xF0, "name": "FIELD_COLLISION_SPARE", "icon": "F" }
+]
 
 export const defaultProjectSettings: Settings = {
   startSceneId: "",
@@ -167,8 +170,8 @@ export const defaultProjectSettings: Settings = {
   showConnections: "selected",
   showCollisionSlopeTiles: false,
   showCollisionExtraTiles: false,
-  collisionLayerAlpha: 128,
-  collisionSettings: defaultCollisionSettings,
+  collisionLayerOpacity: 50,
+  collisionTileLabels: defaultCollisionTileLabels,
   worldScrollX: 0,
   worldScrollY: 0,
   zoom: 100,

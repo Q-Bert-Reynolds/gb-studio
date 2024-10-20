@@ -558,14 +558,16 @@ export const ScriptEventPreset = Type.Object({
 
 export type ScriptEventPreset = Static<typeof ScriptEventPreset>;
 
-export const CollisionSetting = Type.Object({
-  key: Type.String(),
+export const CollisionTileLabel = Type.Object({
+  key: Type.Optional(Type.String()),
   name: Type.Optional(Type.String()),
   color: Type.String(),
   icon: Type.Optional(Type.String()),
+  flag: Type.Number(),
+  mask: Type.Optional(Type.Number()),
 });
 
-export type CollisionSetting = Static<typeof CollisionSetting>;
+export type CollisionTileLabel = Static<typeof CollisionTileLabel>;
 
 export const SettingsResource = Type.Object({
   _resourceType: Type.Literal("settings"),
@@ -579,8 +581,8 @@ export const SettingsResource = Type.Object({
   showConnections: ShowConnectionsSetting,
   showCollisionSlopeTiles: Type.Boolean(),
   showCollisionExtraTiles: Type.Boolean(),
-  collisionLayerAlpha: Type.Number(),
-  collisionSettings: Type.Array(CollisionSetting),
+  collisionLayerOpacity: Type.Number(),
+  collisionTileLabels: Type.Array(CollisionTileLabel),
   worldScrollX: Type.Number(),
   worldScrollY: Type.Number(),
   zoom: Type.Number(),

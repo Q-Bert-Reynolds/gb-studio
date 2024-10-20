@@ -45,13 +45,11 @@ import { ColorModeSelect } from "components/forms/ColorModeSelect";
 import { CompilerPresetSelect } from "components/forms/CompilerPresetSelect";
 import { DMGPalettePicker } from "components/forms/DMGPalettePicker";
 import type { MonoPalette } from "shared/lib/entities/entitiesTypes";
-import { CollisionSetting } from "shared/lib/resources/types";
-import { defaultCollisionSettings } from "consts";
-import { CollisionLayerPicker } from "components/forms/CollisionLayerPicker";
+import { CollisionTileLabelsPicker } from "components/forms/CollisionTileLabelsPicker";
+import { defaultCollisionTileLabels } from "consts";
 
 const SettingsPage: FC = () => {
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state) => state.project.present.settings);
   const sceneTypes = useAppSelector((state) => state.engine.sceneTypes);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [scrollToId, setScrollToId] = useState<string>("");
@@ -80,22 +78,48 @@ const SettingsPage: FC = () => {
     }
   }, [scrollToId]);
 
-  const {
-    colorMode,
-    sgbEnabled,
-    customHead,
-    defaultBGP,
-    defaultOBP0,
-    defaultOBP1,
-    defaultBackgroundPaletteIds,
-    defaultSpritePaletteIds,
-    defaultFontId,
-    defaultPlayerSprites,
-    musicDriver,
-    openBuildLogOnWarnings,
-    generateDebugFilesEnabled,
-    compilerPreset,
-  } = settings;
+  const colorMode = useAppSelector(
+    (state) => state.project.present.settings.colorMode
+  );
+  const sgbEnabled = useAppSelector(
+    (state) => state.project.present.settings.sgbEnabled
+  );
+  const customHead = useAppSelector(
+    (state) => state.project.present.settings.customHead
+  );
+  const defaultBGP = useAppSelector(
+    (state) => state.project.present.settings.defaultBGP
+  );
+  const defaultOBP0 = useAppSelector(
+    (state) => state.project.present.settings.defaultOBP0
+  );
+  const defaultOBP1 = useAppSelector(
+    (state) => state.project.present.settings.defaultOBP1
+  );
+  const defaultBackgroundPaletteIds = useAppSelector(
+    (state) => state.project.present.settings.defaultBackgroundPaletteIds
+  );
+  const defaultSpritePaletteIds = useAppSelector(
+    (state) => state.project.present.settings.defaultSpritePaletteIds
+  );
+  const defaultFontId = useAppSelector(
+    (state) => state.project.present.settings.defaultFontId
+  );
+  const defaultPlayerSprites = useAppSelector(
+    (state) => state.project.present.settings.defaultPlayerSprites
+  );
+  const musicDriver = useAppSelector(
+    (state) => state.project.present.settings.musicDriver
+  );
+  const openBuildLogOnWarnings = useAppSelector(
+    (state) => state.project.present.settings.openBuildLogOnWarnings
+  );
+  const generateDebugFilesEnabled = useAppSelector(
+    (state) => state.project.present.settings.generateDebugFilesEnabled
+  );
+  const compilerPreset = useAppSelector(
+    (state) => state.project.present.settings.compilerPreset
+  );
 
   const dmgEnabled = colorMode !== "color";
   const colorEnabled = colorMode !== "mono";
@@ -234,16 +258,6 @@ const SettingsPage: FC = () => {
     [defaultSpritePaletteIds, editSettings]
   );
 
-  const collisionSettings = useMemo(
-    () => settings.collisionSettings ?? defaultCollisionSettings, 
-    [settings.collisionSettings, defaultCollisionSettings]
-  );
-
-  const onEditCollisionSetting = useCallback((setting: CollisionSetting) =>   
-    editSettings({ collisionSettings: collisionSettings.map(s => s.key == setting.key ? setting : s) }),
-    [editSettings]
-  );
-
   const onEditDefaultPlayerSprites = useCallback(
     (sceneType: string, spriteSheetId: string) => {
       console.log("onEditDefaultPlayerSprites", sceneType, spriteSheetId);
@@ -268,8 +282,6 @@ const SettingsPage: FC = () => {
     },
     [dispatch]
   );
-
-  const dmgColors = [settings.customColorsWhite, settings.customColorsLight, settings.customColorsDark, settings.customColorsBlack];
 
   return (
     <SettingsPageWrapper>
@@ -394,7 +406,7 @@ const SettingsPage: FC = () => {
                 <SettingRowInput>
                   <DMGPalettePicker 
                     name="bgp" 
-                    palette={settings.defaultBGP} 
+                    palette={defaultBGP} 
                     isSpritePalette={false} 
                     onChange={onEditBGP} 
                   />
@@ -410,7 +422,7 @@ const SettingsPage: FC = () => {
                 <SettingRowInput>
                   <DMGPalettePicker 
                     name="obp0" 
-                    palette={settings.defaultOBP0} 
+                    palette={defaultOBP0} 
                     isSpritePalette={true} 
                     onChange={onEditOBP0} 
                   />
@@ -426,7 +438,7 @@ const SettingsPage: FC = () => {
                 <SettingRowInput>
                   <DMGPalettePicker 
                     name="obp1" 
-                    palette={settings.defaultOBP1} 
+                    palette={defaultOBP1} 
                     isSpritePalette={true} 
                     onChange={onEditOBP1} 
                   />
@@ -732,11 +744,27 @@ const SettingsPage: FC = () => {
             searchTerm={searchTerm}
             searchMatches={[l10n("SETTINGS_TILE_COLLISIONS")]}
           >
-            <SettingRowLabel>{l10n("SETTINGS_TILE_COLLISIONS")}</SettingRowLabel>
+            <SettingRowLabel>
+              {l10n("SETTINGS_TILE_COLLISIONS")}
+            </SettingRowLabel>
             <SettingRowInput>
-              <CollisionLayerPicker key={"TileCollisionLayers"} onChange={onEditCollisionSetting} />
+              <CollisionTileLabelsPicker />
             </SettingRowInput>
           </SearchableSettingRow>
+          {!searchTerm && (
+            <CardButtons>
+              <Button
+                onClick={() => {
+                  onChangeSettingProp(
+                    "collisionTileLabels",
+                    defaultCollisionTileLabels
+                  );
+                }}
+              >
+                {l10n("FIELD_RESTORE_DEFAULT")}
+              </Button>
+            </CardButtons>
+          )}
         </SearchableCard>
 
         <EngineFieldsEditor searchTerm={searchTerm} />
