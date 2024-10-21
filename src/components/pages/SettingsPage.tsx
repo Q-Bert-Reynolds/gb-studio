@@ -45,8 +45,6 @@ import { ColorModeSelect } from "components/forms/ColorModeSelect";
 import { CompilerPresetSelect } from "components/forms/CompilerPresetSelect";
 import { DMGPalettePicker } from "components/forms/DMGPalettePicker";
 import type { MonoPalette } from "shared/lib/entities/entitiesTypes";
-import { CollisionTileLabelsPicker } from "components/forms/CollisionTileLabelsPicker";
-import { defaultCollisionTileLabels } from "consts";
 
 const SettingsPage: FC = () => {
   const dispatch = useAppDispatch();
@@ -311,9 +309,6 @@ const SettingsPage: FC = () => {
             </SettingsMenuItem>
             <SettingsMenuItem onClick={onMenuItem("settingsMusic")}>
               {l10n("SETTINGS_MUSIC")}
-            </SettingsMenuItem>
-            <SettingsMenuItem onClick={onMenuItem("settingsCollisions")}>
-              {l10n("SETTINGS_COLLISIONS")}
             </SettingsMenuItem>
             {groupedFields.map((group) => (
               <SettingsMenuItem
@@ -731,40 +726,6 @@ const SettingsPage: FC = () => {
               </FormField>
             </SettingRowInput>
           </SearchableSettingRow>
-        </SearchableCard>
-
-        <SearchableCard
-          searchTerm={searchTerm}
-          searchMatches={[l10n("SETTINGS_COLLISIONS")]}
-        >
-          <CardAnchor id="settingsCollisions" />
-          <CardHeading>{l10n("SETTINGS_COLLISIONS")}</CardHeading>
-
-          <SearchableSettingRow
-            searchTerm={searchTerm}
-            searchMatches={[l10n("SETTINGS_TILE_COLLISIONS")]}
-          >
-            <SettingRowLabel>
-              {l10n("SETTINGS_TILE_COLLISIONS")}
-            </SettingRowLabel>
-            <SettingRowInput>
-              <CollisionTileLabelsPicker />
-            </SettingRowInput>
-          </SearchableSettingRow>
-          {!searchTerm && (
-            <CardButtons>
-              <Button
-                onClick={() => {
-                  onChangeSettingProp(
-                    "collisionTileLabels",
-                    defaultCollisionTileLabels
-                  );
-                }}
-              >
-                {l10n("FIELD_RESTORE_DEFAULT")}
-              </Button>
-            </CardButtons>
-          )}
         </SearchableCard>
 
         <EngineFieldsEditor searchTerm={searchTerm} />
