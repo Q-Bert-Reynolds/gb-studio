@@ -93,6 +93,7 @@ const makeBuild = async ({
   }
 
   env.GBDK_COMPILER_PRESET = String(settings.compilerPreset);
+  env.PS2_KEYBOARD = settings.ps2KeyboardSupported ? "1" : "0";
 
   // Clear old cached data before fetching new data
   await clearAppCacheOlderThan(tmpPath, 24 * 60 * 60 * 1000); // 24 hours
@@ -109,6 +110,7 @@ const makeBuild = async ({
     platform: process.platform,
     targetPlatform,
     compilerPreset: settings.compilerPreset,
+    ps2KeyboardSupported: settings.ps2KeyboardSupported,
   });
 
   const options = {
@@ -132,18 +134,22 @@ const makeBuild = async ({
           } catch (e) {
             throw e;
           }
-          const { child, completed } = spawn(
-            makeCommand.command,
-            makeCommand.args,
-            options,
-            {
-              onLog: (msg) => warnings(msg), // LCC writes errors to stdout
-              onError: (msg) => warnings(msg),
-            },
-          );
-          childSet.add(child);
-          await completed;
-          childSet.delete(child);
+          for (const command of [makeCommand.preprocess, makeCommand]) {
+            if (!command) continue;
+            if (cancelling) throw new Error("BUILD_CANCELLED");
+            const { child, completed } = spawn(
+              command.command,
+              command.args,
+              options,
+              {
+                onLog: (msg) => warnings(msg), // LCC writes errors to stdout
+                onError: (msg) => warnings(msg),
+              },
+            );
+            childSet.add(child);
+            await completed;
+            childSet.delete(child);
+          }
         }
       }),
   );

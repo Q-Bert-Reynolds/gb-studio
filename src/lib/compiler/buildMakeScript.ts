@@ -11,6 +11,7 @@ type BuildOptions = {
   batteryless: boolean;
   targetPlatform: "gb" | "pocket";
   compilerPreset: number;
+  ps2KeyboardSupported?: boolean;
 };
 
 export const getBuildCommands = async (
@@ -23,6 +24,7 @@ export const getBuildCommands = async (
     batteryless,
     targetPlatform,
     compilerPreset,
+    ps2KeyboardSupported,
   }: BuildOptions,
 ) => {
   const output = [];
@@ -59,6 +61,7 @@ export const getBuildCommands = async (
       }
 
       buildArgs.push("-DHUGE_TRACKER");
+      if (ps2KeyboardSupported) buildArgs.push("-DPS2_KEYBOARD");
 
       if (batteryless) {
         buildArgs.push("-DBATTERYLESS");
@@ -82,12 +85,32 @@ export const getBuildCommands = async (
         buildArgs.push("-msm83:ap");
       }
 
-      buildArgs.push(
-        "-c",
-        "-o",
-        Path.relative(buildRoot, objFile),
-        Path.relative(buildRoot, file),
-      );
+      let inputFile = Path.relative(buildRoot, file);
+      let preprocess: { command: string; args: string[] } | undefined;
+      if (
+        source.sourcePath === "src/core/gb/keyboard_serial.s" ||
+        source.sourcePath === "src/core/gb/interrupt_sio.s"
+      ) {
+        // SDAS does not interpret C feature guards.
+        const preprocessedFile = Path.relative(buildRoot, `${objFile}.s`);
+        preprocess = {
+          command: CC.replace(/lcc$/, "sdcpp"),
+          args: [
+            "-P",
+            "-nostdinc",
+            "-undef",
+            "-x",
+            "assembler-with-cpp",
+            ...buildArgs.filter((arg) => arg.startsWith("-D")),
+            inputFile,
+            "-o",
+            preprocessedFile,
+          ],
+        };
+        inputFile = preprocessedFile;
+      }
+
+      buildArgs.push("-c", "-o", Path.relative(buildRoot, objFile), inputFile);
 
       output.push({
         label: `${l10n("COMPILER_COMPILING")}: ${Path.relative(
@@ -96,6 +119,7 @@ export const getBuildCommands = async (
         )}`,
         command: CC,
         args: buildArgs,
+        preprocess,
       });
     }
   }
@@ -186,8 +210,10 @@ export const buildMakeDotBuildFile = ({
   color = false,
   sgb = false,
   batteryless = false,
+  ps2KeyboardSupported = false,
 }) => {
   return (
+    `PS2_KEYBOARD := ${ps2KeyboardSupported ? 1 : 0}\n` +
     `settings: ` +
     ([] as Array<string>)
       .concat(

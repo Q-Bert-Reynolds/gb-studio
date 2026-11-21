@@ -1,16 +1,23 @@
 import type { Settings } from "shared/lib/resources/types";
 import type { L10NKey } from "shared/lib/lang/l10n";
+import { defaultProjectSettings } from "consts";
 
-export const defaultJoypadControls = {
-  customControlsUp: ["ArrowUp", "w"],
-  customControlsDown: ["ArrowDown", "s"],
-  customControlsLeft: ["ArrowLeft", "a"],
-  customControlsRight: ["ArrowRight", "d"],
-  customControlsA: ["Alt", "z", "j"],
-  customControlsB: ["Control", "k", "x"],
-  customControlsStart: ["Enter"],
-  customControlsSelect: ["Shift"],
-} as const;
+const joypadControlKeys = [
+  "customControlsUp",
+  "customControlsDown",
+  "customControlsLeft",
+  "customControlsRight",
+  "customControlsA",
+  "customControlsB",
+  "customControlsStart",
+  "customControlsSelect",
+] as const;
+
+type JoypadControlKey = (typeof joypadControlKeys)[number];
+
+export const defaultJoypadControls = Object.fromEntries(
+  joypadControlKeys.map((key) => [key, defaultProjectSettings[key]]),
+) as Pick<Settings, JoypadControlKey>;
 
 export const emulatorShortcuts = [
   { id: "pause", label: "FIELD_EMULATOR_KEY_PAUSE", keys: [] },

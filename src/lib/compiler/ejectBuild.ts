@@ -239,6 +239,7 @@ const ejectBuild = async ({
     color: colorEnabled,
     sgb: settings.sgbEnabled,
     batteryless: settings.batterylessEnabled,
+    ps2KeyboardSupported: settings.ps2KeyboardSupported,
   });
   await fs.writeFile(`${outputRoot}/Makefile.build`, makeDotBuildFile);
 

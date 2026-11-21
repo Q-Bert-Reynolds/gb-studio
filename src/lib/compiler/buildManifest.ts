@@ -31,24 +31,31 @@ export type BuildManifest = {
 export const resolveBuildSources = async (
   buildRoot: string,
   attribution: PluginFileAttribution,
+  { ps2KeyboardSupported = false }: { ps2KeyboardSupported?: boolean } = {},
 ): Promise<BuildSource[]> => {
   const sourceFiles = await glob("src/**/*.@(c|s)", { cwd: buildRoot });
 
-  const sources = sourceFiles.map((sourceFile) => {
-    const sourcePath = pathToPosix(sourceFile);
-    const sourceName = Path.basename(sourcePath, Path.extname(sourcePath));
-    const plugin = attribution.ownedFiles[sourcePath];
-    const origin: BuildSourceOrigin = plugin
-      ? { type: "plugin", ...plugin }
-      : sourcePath.startsWith("src/data/")
-        ? { type: "project" }
-        : { type: "engine" };
-    return {
-      sourcePath,
-      objectPath: Path.join(buildRoot, "obj", `${sourceName}.o`),
-      origin,
-    };
-  });
+  const sources = sourceFiles
+    .filter(
+      (sourceFile) =>
+        ps2KeyboardSupported ||
+        pathToPosix(sourceFile) !== "src/core/keyboard.c",
+    )
+    .map((sourceFile) => {
+      const sourcePath = pathToPosix(sourceFile);
+      const sourceName = Path.basename(sourcePath, Path.extname(sourcePath));
+      const plugin = attribution.ownedFiles[sourcePath];
+      const origin: BuildSourceOrigin = plugin
+        ? { type: "plugin", ...plugin }
+        : sourcePath.startsWith("src/data/")
+          ? { type: "project" }
+          : { type: "engine" };
+      return {
+        sourcePath,
+        objectPath: Path.join(buildRoot, "obj", `${sourceName}.o`),
+        origin,
+      };
+    });
 
   const objectOwners = new Map<string, string>();
   for (const source of sources) {

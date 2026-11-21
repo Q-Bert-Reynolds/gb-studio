@@ -89,6 +89,7 @@ export const buildProject = async ({
     const buildSources = await resolveBuildSources(
       outputRoot,
       pluginAttribution,
+      { ps2KeyboardSupported: !!project.settings.ps2KeyboardSupported },
     );
     const manifest = createBuildManifest({
       buildRoot: outputRoot,
