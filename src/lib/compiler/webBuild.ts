@@ -6,6 +6,7 @@ import copy from "lib/helpers/fsCopy";
 import { pathToPosix } from "shared/lib/helpers/path";
 import type { ProjectResources } from "shared/lib/resources/types";
 import type { WebTemplateInfo } from "shared/lib/webTemplates/types";
+import { makeBinjgbIni } from "shared/lib/controls/keyboard";
 
 export const DEFAULT_WEB_TEMPLATE = "";
 export const DEFAULT_WEB_TEMPLATE_NAME = "Default (Binjgb)";
@@ -350,6 +351,10 @@ export const exportWebBuild = async ({
     .replace(/___PROJECT_HEAD___/g, customHead);
 
   await fs.writeFile(htmlPath, html);
+  await fs.writeFile(
+    Path.join(destination, "binjgb.ini"),
+    makeBinjgbIni(project.settings),
+  );
   await fs.ensureDir(Path.dirname(configOutputPath));
   await fs.writeJSON(
     configOutputPath,

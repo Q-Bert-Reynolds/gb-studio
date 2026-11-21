@@ -1,7 +1,9 @@
+import { defaultJoypadControls as defaultValues } from "shared/lib/controls/keyboard";
 import React, { useCallback, useMemo } from "react";
 import l10n from "shared/lib/lang/l10n";
 import { Button } from "ui/buttons/Button";
 import settingsActions from "store/features/settings/settingsActions";
+import { Checkbox } from "ui/form/Checkbox";
 import { Input } from "ui/form/Input";
 import { SearchableSettingRow } from "ui/form/SearchableSettingRow";
 import { CardButtons } from "ui/cards/Card";
@@ -38,17 +40,6 @@ const keyMap = {
   b: "customControlsB",
   start: "customControlsStart",
   select: "customControlsSelect",
-} as const;
-
-const defaultValues = {
-  customControlsUp: ["ArrowUp", "w"],
-  customControlsDown: ["ArrowDown", "s"],
-  customControlsLeft: ["ArrowLeft", "a"],
-  customControlsRight: ["ArrowRight", "d"],
-  customControlsA: ["Alt", "z", "j"],
-  customControlsB: ["Control", "k", "x"],
-  customControlsStart: ["Enter"],
-  customControlsSelect: ["Shift"],
 } as const;
 
 interface DirectionOption {
@@ -137,12 +128,15 @@ const CustomControlsPicker = ({ searchTerm }: CustomControlsPickerProps) => {
   const onRestoreDefault = useCallback(() => {
     dispatch(
       settingsActions.editSettings(
-        Object.keys(defaultValues).reduce((memo, key) => {
-          return {
-            ...memo,
-            [key]: undefined,
-          };
-        }, {}),
+        Object.keys(defaultValues).reduce(
+          (memo, key) => {
+            return {
+              ...memo,
+              [key]: undefined,
+            };
+          },
+          { ps2KeyboardSupported: false },
+        ),
       ),
     );
   }, [dispatch]);
@@ -194,6 +188,29 @@ const CustomControlsPicker = ({ searchTerm }: CustomControlsPickerProps) => {
           </SettingRowInput>
         </SearchableSettingRow>
       ))}
+      <SearchableSettingRow
+        searchTerm={searchTerm}
+        searchMatches={[l10n("FIELD_PS2_KEYBOARD_SUPPORTED")]}
+        isCheckbox
+      >
+        <SettingRowLabel htmlFor="ps2KeyboardSupported">
+          {l10n("FIELD_PS2_KEYBOARD_SUPPORTED")}
+        </SettingRowLabel>
+        <SettingRowInput>
+          <Checkbox
+            id="ps2KeyboardSupported"
+            name="ps2KeyboardSupported"
+            checked={settings.ps2KeyboardSupported ?? false}
+            onChange={(event) =>
+              dispatch(
+                settingsActions.editSettings({
+                  ps2KeyboardSupported: event.currentTarget.checked,
+                }),
+              )
+            }
+          />
+        </SettingRowInput>
+      </SearchableSettingRow>
       <CardButtons>
         <Button onClick={onRestoreDefault}>
           {l10n("FIELD_RESTORE_DEFAULT")}

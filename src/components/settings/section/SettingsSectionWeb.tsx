@@ -11,6 +11,8 @@ import { SearchableCard } from "ui/cards/SearchableCard";
 import { useAppDispatch, useAppSelector } from "store/hooks";
 import buildGameActions from "store/features/buildGame/buildGameActions";
 import { InputGroup, InputGroupAppend } from "ui/form/InputGroup";
+import { EmulatorShortcutsPicker } from "components/forms/EmulatorShortcutsPicker";
+import { emulatorShortcuts } from "shared/lib/controls/keyboard";
 import { EjectIcon } from "ui/icons/Icons";
 
 interface SettingsSectionWebProps {
@@ -51,6 +53,8 @@ export const SettingsSectionWeb = ({ searchTerm }: SettingsSectionWebProps) => {
       searchTerm={searchTerm}
       searchMatches={[
         l10n("SETTINGS_WEB_EXPORT"),
+        l10n("FIELD_EMULATOR_KEYS_ENABLED"),
+        ...emulatorShortcuts.map((shortcut) => l10n(shortcut.label)),
         l10n("FIELD_WEB_TEMPLATE"),
         l10n("MENU_EJECT_WEB_TEMPLATE"),
       ]}
@@ -115,6 +119,7 @@ export const SettingsSectionWeb = ({ searchTerm }: SettingsSectionWebProps) => {
           </pre>
         </SettingRowInput>
       </SearchableSettingRow>
+      <EmulatorShortcutsPicker searchTerm={searchTerm} />
     </SearchableCard>
   );
 };

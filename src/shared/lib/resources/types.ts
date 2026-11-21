@@ -962,6 +962,11 @@ export const SettingsResource = Type.Object({
   customControlsB: Type.Array(Type.String()),
   customControlsStart: Type.Array(Type.String()),
   customControlsSelect: Type.Array(Type.String()),
+  ps2KeyboardSupported: Type.Optional(Type.Boolean()),
+  emulatorShortcutsEnabled: Type.Optional(Type.Boolean()),
+  emulatorShortcuts: Type.Optional(
+    Type.Record(Type.String(), Type.Array(Type.String())),
+  ),
   buildAndDebugPaneEnabled: Type.Boolean(),
   debuggerScriptType: DebuggerScriptType,
   debuggerVariablesFilter: DebuggerVariablesFilterType,

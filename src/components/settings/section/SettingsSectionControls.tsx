@@ -23,6 +23,7 @@ export const SettingsSectionControls = ({
         "B",
         "Start",
         "Select",
+        l10n("FIELD_PS2_KEYBOARD_SUPPORTED"),
       ]}
     >
       <CardAnchor id="settingsControls" />
