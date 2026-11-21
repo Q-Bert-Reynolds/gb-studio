@@ -72,8 +72,10 @@ class Debug {
     this.backgroundPreviewType = 0;
 
     this.debugRunUntil = (ticks) => {
+      this.emulator.keyboard.flush();
       while (true) {
         const event = this.module._emulator_run_until_f64(this.e, ticks);
+        this.emulator.keyboard.flush();
         if (event & EVENT_NEW_FRAME) {
           this.emulator.rewind.pushBuffer();
           this.emulator.video.uploadTexture();

@@ -86,6 +86,7 @@ const bEl = $("#controller_b");
 const aEl = $("#controller_a");
 
 const binjgbPromise = Binjgb();
+const keyboardConfigPromise = BinjgbKeyboard.loadConfig("binjgb.ini");
 
 const sgbEnabled = window.location.href.includes("sgb=true");
 if (sgbEnabled) {
@@ -158,7 +159,12 @@ const vm = new VM();
   let response = await fetch(webConfig.rom);
   let romBuffer = await response.arrayBuffer();
   const extRam = new Uint8Array(JSON.parse(localStorage.getItem("extram")));
-  Emulator.start(await binjgbPromise, romBuffer, extRam);
+  Emulator.start(
+    await binjgbPromise,
+    romBuffer,
+    extRam,
+    await keyboardConfigPromise,
+  );
   emulator.setBuiltinPalette(vm.palIdx);
 })();
 
@@ -167,9 +173,9 @@ function makeWasmBuffer(module, ptr, size) {
 }
 
 class Emulator {
-  static start(module, romBuffer, extRamBuffer) {
+  static start(module, romBuffer, extRamBuffer, keyboardConfig) {
     Emulator.stop();
-    emulator = new Emulator(module, romBuffer, extRamBuffer);
+    emulator = new Emulator(module, romBuffer, extRamBuffer, keyboardConfig);
     emulator.run();
   }
 
@@ -180,24 +186,25 @@ class Emulator {
     }
   }
 
-  constructor(module, romBuffer, extRamBuffer) {
+  constructor(module, romBuffer, extRamBuffer, keyboardConfig) {
     this.module = module;
     this.romDataPtr = this.module._malloc(romBuffer.byteLength);
     makeWasmBuffer(this.module, this.romDataPtr, romBuffer.byteLength).set(
-      new Uint8Array(romBuffer)
+      new Uint8Array(romBuffer),
     );
     this.e = this.module._emulator_new_simple(
       this.romDataPtr,
       romBuffer.byteLength,
       Audio.ctx.sampleRate,
       AUDIO_FRAMES,
-      toBinjgbColorCorrection(webConfig.colorCorrection)
+      toBinjgbColorCorrection(webConfig.colorCorrection),
     );
     if (this.e == 0) {
       throw new Error("Invalid ROM.");
     }
 
-    this.gamepad = new Gamepad(module, this.e);
+    this.joypad = new BinjgbJoypad(module, this.e);
+    this.gamepad = new Gamepad(this.joypad);
     this.audio = new Audio(module, this.e);
     this.video = new Video(module, this.e, $("canvas"));
     this.rewind = new Rewind(module, this.e);
@@ -206,12 +213,13 @@ class Emulator {
     this.lastRafSec = 0;
     this.leftoverTicks = 0;
     this.fps = 60;
+    this.fastForward = false;
 
     if (extRamBuffer) {
       this.loadExtRam(extRamBuffer);
     }
 
-    this.bindKeys();
+    this.bindKeys(keyboardConfig);
     this.bindTouch();
 
     this.touchEnabled = "ontouchstart" in document.documentElement;
@@ -227,6 +235,7 @@ class Emulator {
     this.cancelAnimationFrame();
     clearInterval(this.rewindIntervalId);
     this.rewind.destroy();
+    this.audio.destroy();
     this.module._emulator_delete(this.e);
     this.module._free(this.romDataPtr);
   }
@@ -236,7 +245,7 @@ class Emulator {
     const buffer = makeWasmBuffer(
       this.module,
       this.module._get_file_data_ptr(fileDataPtr),
-      this.module._get_file_data_size(fileDataPtr)
+      this.module._get_file_data_size(fileDataPtr),
     );
     const result = cb(fileDataPtr, buffer);
     this.module._file_data_delete(fileDataPtr);
@@ -256,6 +265,42 @@ class Emulator {
     return this.withNewFileData((fileDataPtr, buffer) => {
       this.module._emulator_write_ext_ram(this.e, fileDataPtr);
       return new Uint8Array(buffer);
+    });
+  }
+
+  withNewStateFileData(cb) {
+    const fileDataPtr = this.module._state_file_data_new(this.e);
+    try {
+      return cb(
+        fileDataPtr,
+        makeWasmBuffer(
+          this.module,
+          this.module._get_file_data_ptr(fileDataPtr),
+          this.module._get_file_data_size(fileDataPtr),
+        ),
+      );
+    } finally {
+      this.module._file_data_delete(fileDataPtr);
+      this.module._free(fileDataPtr);
+    }
+  }
+
+  saveState() {
+    const state = this.withNewStateFileData((ptr, buffer) => {
+      this.module._emulator_write_state(this.e, ptr);
+      return Array.from(buffer);
+    });
+    localStorage.setItem(`saveState:${webConfig.rom}`, JSON.stringify(state));
+  }
+
+  loadState() {
+    const saved = localStorage.getItem(`saveState:${webConfig.rom}`);
+    if (!saved) return;
+    const state = new Uint8Array(JSON.parse(saved));
+    this.withNewStateFileData((ptr, buffer) => {
+      if (buffer.byteLength !== state.byteLength) return;
+      buffer.set(state);
+      this.module._emulator_read_state(this.e, ptr);
     });
   }
 
@@ -340,8 +385,10 @@ class Emulator {
   }
 
   runUntil(ticks) {
+    this.keyboard.flush();
     while (true) {
       const event = this.module._emulator_run_until_f64(this.e, ticks);
+      this.keyboard.flush();
       if (event & EVENT_NEW_FRAME) {
         this.rewind.pushBuffer();
         this.video.uploadTexture();
@@ -366,7 +413,9 @@ class Emulator {
       deltaSec = Math.max(startSec - (this.lastRafSec || startSec), 0);
       const startTicks = this.ticks;
       const deltaTicks =
-        Math.min(deltaSec, MAX_UPDATE_SEC) * CPU_TICKS_PER_SECOND;
+        Math.min(deltaSec, MAX_UPDATE_SEC) *
+        CPU_TICKS_PER_SECOND *
+        (this.fastForward ? 4 : 1);
       const runUntilTicks = startTicks + deltaTicks - this.leftoverTicks;
       this.runUntil(runUntilTicks);
       this.leftoverTicks = (this.ticks - runUntilTicks) | 0;
@@ -491,145 +540,121 @@ class Emulator {
     this.updateOnscreenGamepad();
   }
 
-  bindKeys() {
-    this.keyFuncs = {
-      backspace: this.keyRewind.bind(this),
-      " ": this.keyPause.bind(this),
-      "[": this.keyPrevPalette.bind(this),
-      "]": this.keyNextPalette.bind(this),
+  bindKeys(config) {
+    // Older ejected templates may not have an INI. Retain gbstudio.json
+    // controls as defaults; exported INI bindings then override them in order.
+    const legacyKeys = {
+      Alt: ["LALT", "RALT"],
+      Control: ["LCTRL", "RCTRL"],
+      Shift: ["LSHIFT", "RSHIFT"],
+      Meta: ["LGUI", "RGUI"],
+      Enter: ["RETURN", "KP_ENTER"],
+      " ": ["SPACE"],
+      "-": ["MINUS"],
+      "=": ["EQUALS"],
+      "[": ["LEFTBRACKET"],
+      "]": ["RIGHTBRACKET"],
+      "\\": ["BACKSLASH"],
+      ";": ["SEMICOLON"],
+      "'": ["APOSTROPHE"],
+      "`": ["GRAVE"],
+      ",": ["COMMA"],
+      ".": ["PERIOD"],
+      "/": ["SLASH"],
     };
-
-    const customControls = webConfig.customControls || {};
-    if (customControls.down && customControls.down.length > 0) {
-      customControls.down.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypDown.bind(this);
-      });
-    } else {
-      this.keyFuncs["arrowdown"] = this.setJoypDown.bind(this);
-      this.keyFuncs["s"] = this.setJoypDown.bind(this);
+    const physicalKeys = (keys) =>
+      keys
+        .flatMap((key) => {
+          if (Object.hasOwn(legacyKeys, key)) return legacyKeys[key];
+          if (/^[a-z0-9]$/i.test(key)) return [key.toUpperCase()];
+          const match = Object.entries(BINJGB_KEY_CODES).find(
+            ([, [code]]) => code === key,
+          );
+          if (!match) throw new Error(`Unsupported joypad key: ${key}`);
+          return [match[0]];
+        })
+        .join(",");
+    const defaults = {
+      up: ["ArrowUp", "w"],
+      down: ["ArrowDown", "s"],
+      left: ["ArrowLeft", "a"],
+      right: ["ArrowRight", "d"],
+      a: ["Alt", "z", "j"],
+      b: ["Control", "k", "x"],
+      start: ["Enter"],
+      select: ["Shift"],
+    };
+    const handlers = {};
+    for (const [button, keys] of Object.entries(defaults)) {
+      const custom =
+        webConfig.customControls && webConfig.customControls[button];
+      const wasmButton =
+        button === "a" || button === "b" ? button.toUpperCase() : button;
+      handlers[`joypad-${button}`] = {
+        keys: physicalKeys(custom && custom.length ? custom : keys),
+        held: true,
+        callback: (down) => this.joypad.set(wasmButton, "keyboard", down),
+      };
     }
-
-    if (customControls.left && customControls.left.length > 0) {
-      customControls.left.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypLeft.bind(this);
-      });
-    } else {
-      this.keyFuncs["arrowleft"] = this.setJoypLeft.bind(this);
-      this.keyFuncs["a"] = this.setJoypLeft.bind(this);
-    }
-
-    if (customControls.right && customControls.right.length > 0) {
-      customControls.right.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypRight.bind(this);
-      });
-    } else {
-      this.keyFuncs["arrowright"] = this.setJoypRight.bind(this);
-      this.keyFuncs["d"] = this.setJoypRight.bind(this);
-    }
-
-    if (customControls.up && customControls.up.length > 0) {
-      customControls.up.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypUp.bind(this);
-      });
-    } else {
-      this.keyFuncs["arrowup"] = this.setJoypUp.bind(this);
-      this.keyFuncs["w"] = this.setJoypUp.bind(this);
-    }
-
-    if (customControls.a && customControls.a.length > 0) {
-      customControls.a.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypA.bind(this);
-      });
-    } else {
-      this.keyFuncs["z"] = this.setJoypA.bind(this);
-      this.keyFuncs["j"] = this.setJoypA.bind(this);
-      this.keyFuncs["alt"] = this.setJoypA.bind(this);
-    }
-
-    if (customControls.b && customControls.b.length > 0) {
-      customControls.b.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypB.bind(this);
-      });
-    } else {
-      this.keyFuncs["x"] = this.setJoypB.bind(this);
-      this.keyFuncs["k"] = this.setJoypB.bind(this);
-      this.keyFuncs["control"] = this.setJoypB.bind(this);
-    }
-
-    if (customControls.start && customControls.start.length > 0) {
-      customControls.start.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypStart.bind(this);
-      });
-    } else {
-      this.keyFuncs["enter"] = this.setJoypStart.bind(this);
-    }
-
-    if (customControls.select && customControls.select.length > 0) {
-      customControls.select.forEach((k) => {
-        this.keyFuncs[String(k).toLowerCase()] = this.setJoypSelect.bind(this);
-      });
-    } else {
-      this.keyFuncs["shift"] = this.setJoypSelect.bind(this);
-    }
-
-    this.boundKeyDown = this.keyDown.bind(this);
-    this.boundKeyUp = this.keyUp.bind(this);
-    this.boundWindowBlur = this.windowBlur.bind(this);
-
-    window.addEventListener("keydown", this.boundKeyDown);
-    window.addEventListener("keyup", this.boundKeyUp);
-    window.addEventListener("blur", this.boundWindowBlur);
+    Object.assign(handlers, {
+      "shortcut-rewind": {
+        keys: ENABLE_REWIND ? "BACKSPACE" : "",
+        held: true,
+        callback: this.keyRewind.bind(this),
+      },
+      "shortcut-pause": {
+        keys: ENABLE_PAUSE ? "SPACE" : "",
+        callback: this.keyPause.bind(this),
+      },
+      "shortcut-palette-prev": {
+        keys: ENABLE_SWITCH_PALETTES ? "LEFTBRACKET" : "",
+        callback: this.keyPrevPalette.bind(this),
+      },
+      "shortcut-palette-next": {
+        keys: ENABLE_SWITCH_PALETTES ? "RIGHTBRACKET" : "",
+        callback: this.keyNextPalette.bind(this),
+      },
+      "shortcut-save-state": { keys: "", callback: this.saveState.bind(this) },
+      "shortcut-load-state": { keys: "", callback: this.loadState.bind(this) },
+      "shortcut-fast-forward": {
+        keys: "",
+        held: true,
+        callback: (down) => {
+          this.fastForward = down;
+        },
+      },
+      "shortcut-fullscreen": {
+        keys: "",
+        callback: () => {
+          if (document.fullscreenElement) document.exitFullscreen();
+          else $("canvas").requestFullscreen();
+        },
+      },
+    });
+    // Old exports had no PS/2 device. New exports opt in through the INI.
+    this.keyboard = new BinjgbKeyboard(
+      this.module,
+      this.e,
+      [["ps2-keyboard", "0"], ...(config || [])],
+      handlers,
+      {
+        allowMappedModifiers: true,
+        onInput: () => {
+          if (this.touchEnabled) {
+            this.touchEnabled = false;
+            this.updateOnscreenGamepad();
+            this.joypad.clearSource("touch");
+          }
+        },
+      },
+    );
   }
 
   unbindKeys() {
-    window.removeEventListener("keydown", this.boundKeyDown);
-    window.removeEventListener("keyup", this.boundKeyUp);
-    window.removeEventListener("blur", this.boundWindowBlur); 
+    this.keyboard.destroy();
   }
-
-  keyDown(event) {
-    const key = event.key.toLowerCase();
-
-    if (key === "w" && (event.metaKey || event.ctrlKey)) {
-      return;
-    }
-    if (key in this.keyFuncs) {
-      if (this.touchEnabled) {
-        this.touchEnabled = false;
-        this.updateOnscreenGamepad();
-      }
-      this.keyFuncs[key](true);
-      event.preventDefault();
-    }
-  }
-
-  keyUp(event) {
-    const key = event.key.toLowerCase();
-    if (key in this.keyFuncs) {
-      this.keyFuncs[key](false);
-      event.preventDefault();
-    }
-  }
-
-  windowBlur() {
-    this.setJoypDown(false);
-    this.setJoypUp(false);
-    this.setJoypLeft(false);
-    this.setJoypRight(false);
-    this.setJoypA(false);
-    this.setJoypB(false);
-    this.setJoypSelect(false);
-    this.setJoypStart(false);
-    if (this.isRewinding) {
-      this.autoRewind = false;
-      vm.paused = false;
-    }
-  }  
 
   keyRewind(isKeyDown) {
-    if (!ENABLE_REWIND) {
-      return;
-    }
     if (this.isRewinding !== isKeyDown) {
       if (isKeyDown) {
         vm.paused = true;
@@ -642,16 +667,10 @@ class Emulator {
   }
 
   keyPause(isKeyDown) {
-    if (!ENABLE_PAUSE) {
-      return;
-    }
     if (isKeyDown) vm.togglePause();
   }
 
   keyPrevPalette(isKeyDown) {
-    if (!ENABLE_SWITCH_PALETTES) {
-      return;
-    }
     if (isKeyDown) {
       vm.palIdx = (vm.palIdx + PALETTES.length - 1) % PALETTES.length;
       emulator.setBuiltinPalette(vm.palIdx);
@@ -659,9 +678,6 @@ class Emulator {
   }
 
   keyNextPalette(isKeyDown) {
-    if (!ENABLE_SWITCH_PALETTES) {
-      return;
-    }
     if (isKeyDown) {
       vm.palIdx = (vm.palIdx + 1) % PALETTES.length;
       emulator.setBuiltinPalette(vm.palIdx);
@@ -669,40 +685,39 @@ class Emulator {
   }
 
   setJoypDown(set) {
-    this.module._set_joyp_down(this.e, set);
+    this.joypad.set("down", "touch", set);
   }
   setJoypUp(set) {
-    this.module._set_joyp_up(this.e, set);
+    this.joypad.set("up", "touch", set);
   }
   setJoypLeft(set) {
-    this.module._set_joyp_left(this.e, set);
+    this.joypad.set("left", "touch", set);
   }
   setJoypRight(set) {
-    this.module._set_joyp_right(this.e, set);
+    this.joypad.set("right", "touch", set);
   }
   setJoypSelect(set) {
-    this.module._set_joyp_select(this.e, set);
+    this.joypad.set("select", "touch", set);
   }
   setJoypStart(set) {
-    this.module._set_joyp_start(this.e, set);
+    this.joypad.set("start", "touch", set);
   }
   setJoypB(set) {
-    this.module._set_joyp_B(this.e, set);
+    this.joypad.set("B", "touch", set);
   }
   setJoypA(set) {
-    this.module._set_joyp_A(this.e, set);
+    this.joypad.set("A", "touch", set);
   }
   serialCallback(_x) {
-      // CM: Added a noop here to prevent binjgb throwing an error when
-      // data is sent on link cable, can update this later
-      // to send logs to GB Studio debugger
+    // CM: Added a noop here to prevent binjgb throwing an error when
+    // data is sent on link cable, can update this later
+    // to send logs to GB Studio debugger
   }
 }
 
 class Gamepad {
-  constructor(module, e) {
-    this.module = module;
-    this.e = e;
+  constructor(joypad) {
+    this.joypad = joypad;
   }
 
   // Load a key map for gamepad-to-gameboy buttons
@@ -712,49 +727,49 @@ class Gamepad {
         gb_key: "b",
         gp_button: 0,
         type: "button",
-        gp_bind: this.module._set_joyp_B.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("B", "gamepad:button:0", down),
       },
       {
         gb_key: "a",
         gp_button: 1,
         type: "button",
-        gp_bind: this.module._set_joyp_A.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("A", "gamepad:button:1", down),
       },
       {
         gb_key: "select",
         gp_button: 8,
         type: "button",
-        gp_bind: this.module._set_joyp_select.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("select", "gamepad:button:8", down),
       },
       {
         gb_key: "start",
         gp_button: 9,
         type: "button",
-        gp_bind: this.module._set_joyp_start.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("start", "gamepad:button:9", down),
       },
       {
         gb_key: "up",
         gp_button: 12,
         type: "button",
-        gp_bind: this.module._set_joyp_up.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("up", "gamepad:button:12", down),
       },
       {
         gb_key: "down",
         gp_button: 13,
         type: "button",
-        gp_bind: this.module._set_joyp_down.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("down", "gamepad:button:13", down),
       },
       {
         gb_key: "left",
         gp_button: 14,
         type: "button",
-        gp_bind: this.module._set_joyp_left.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("left", "gamepad:button:14", down),
       },
       {
         gb_key: "right",
         gp_button: 15,
         type: "button",
-        gp_bind: this.module._set_joyp_right.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("right", "gamepad:button:15", down),
       },
     ];
 
@@ -763,49 +778,49 @@ class Gamepad {
         gb_key: "a",
         gp_button: 0,
         type: "button",
-        gp_bind: this.module._set_joyp_A.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("A", "gamepad:button:0", down),
       },
       {
         gb_key: "b",
         gp_button: 1,
         type: "button",
-        gp_bind: this.module._set_joyp_B.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("B", "gamepad:button:1", down),
       },
       {
         gb_key: "select",
         gp_button: 2,
         type: "button",
-        gp_bind: this.module._set_joyp_select.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("select", "gamepad:button:2", down),
       },
       {
         gb_key: "start",
         gp_button: 3,
         type: "button",
-        gp_bind: this.module._set_joyp_start.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("start", "gamepad:button:3", down),
       },
       {
         gb_key: "up",
         gp_button: 2,
         type: "axis",
-        gp_bind: this.module._set_joyp_up.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("up", "gamepad:axis:2", down),
       },
       {
         gb_key: "down",
         gp_button: 3,
         type: "axis",
-        gp_bind: this.module._set_joyp_down.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("down", "gamepad:axis:3", down),
       },
       {
         gb_key: "left",
         gp_button: 0,
         type: "axis",
-        gp_bind: this.module._set_joyp_left.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("left", "gamepad:axis:0", down),
       },
       {
         gb_key: "right",
         gp_button: 1,
         type: "axis",
-        gp_bind: this.module._set_joyp_right.bind(null, this.e),
+        gp_bind: (down) => this.joypad.set("right", "gamepad:axis:1", down),
       },
     ];
 
@@ -928,12 +943,13 @@ class Gamepad {
       // Start polling the gamepad for input
       this.gp.timerID = setInterval(
         () => this.update(),
-        GAMEPAD_POLLING_INTERVAL
+        GAMEPAD_POLLING_INTERVAL,
       );
     }
   }
 
   releaseGamepad() {
+    this.joypad.clearSource("gamepad");
     // Stop polling the gamepad for input
     if (this.gp.timerID !== undefined) {
       clearInterval(this.gp.timerID);
@@ -998,7 +1014,7 @@ class Gamepad {
     // When a gamepad disconnects, shut down polling for input
     window.addEventListener(
       "gamepaddisconnected",
-      this.boundGamepadDisconnected
+      this.boundGamepadDisconnected,
     );
   }
 
@@ -1008,7 +1024,7 @@ class Gamepad {
     window.removeEventListener("gamepadconnected", this.boundGamepadConnected);
     window.removeEventListener(
       "gamepaddisconnected",
-      this.boundGamepadDisconnected
+      this.boundGamepadDisconnected,
     );
   }
 }
@@ -1020,7 +1036,7 @@ class Audio {
     this.buffer = makeWasmBuffer(
       this.module,
       this.module._get_audio_buffer_ptr(e),
-      this.module._get_audio_buffer_capacity(e)
+      this.module._get_audio_buffer_capacity(e),
     );
     this.startSec = 0;
     this.resume();
@@ -1071,7 +1087,7 @@ class Audio {
           this.startSec.toFixed(2) +
           " < " +
           nowSec.toFixed(2) +
-          ")"
+          ")",
       );
       this.startSec = nowPlusLatency;
     }
@@ -1089,6 +1105,14 @@ class Audio {
       return;
     }
     Audio.ctx.resume();
+  }
+
+  destroy() {
+    for (const name of ["keydown", "click", "touchend"]) {
+      window.removeEventListener(name, this.boundStartPlayback, true);
+    }
+    this.buffer = null;
+    this.started = false;
   }
 }
 
@@ -1113,12 +1137,12 @@ class Video {
     this.buffer = makeWasmBuffer(
       this.module,
       this.module._get_frame_buffer_ptr(e),
-      this.module._get_frame_buffer_size(e)
+      this.module._get_frame_buffer_size(e),
     );
     this.sgbBuffer = makeWasmBuffer(
       this.module,
       this.module._get_sgb_frame_buffer_ptr(e),
-      this.module._get_sgb_frame_buffer_size(e)
+      this.module._get_sgb_frame_buffer_size(e),
     );
   }
 
@@ -1137,7 +1161,7 @@ class Canvas2DRenderer {
     this.imageData = this.ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
     this.sgbImageData = this.ctx.createImageData(
       SGB_SCREEN_WIDTH,
-      SGB_SCREEN_HEIGHT
+      SGB_SCREEN_HEIGHT,
     );
 
     this.overlayCanvas = document.createElement("canvas");
@@ -1189,7 +1213,7 @@ class WebGLRenderer {
         void main(void) {
           gl_Position = vec4(aPos, 0.0, 1.0);
           vTexCoord = aTexCoord;
-        }`
+        }`,
     );
     const fragmentShader = compileShader(
       gl.FRAGMENT_SHADER,
@@ -1197,7 +1221,7 @@ class WebGLRenderer {
         uniform sampler2D uSampler;
         void main(void) {
           gl_FragColor = texture2D(uSampler, vTexCoord);
-        }`
+        }`,
     );
 
     const program = gl.createProgram();
@@ -1306,7 +1330,7 @@ class WebGLRenderer {
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      null
+      null,
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -1325,7 +1349,7 @@ class WebGLRenderer {
       SCREEN_HEIGHT,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      buffer
+      buffer,
     );
 
     gl.bindTexture(gl.TEXTURE_2D, this.sgbFbTexture);
@@ -1338,7 +1362,7 @@ class WebGLRenderer {
       SGB_SCREEN_HEIGHT,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      sgbBuffer
+      sgbBuffer,
     );
   }
 
@@ -1373,7 +1397,7 @@ class Rewind {
     this.bufferPtr = this.module._rewind_new_simple(
       e,
       REWIND_FRAMES_PER_BASE_STATE,
-      REWIND_BUFFER_CAPACITY
+      REWIND_BUFFER_CAPACITY,
     );
     this.module._emulator_set_default_joypad_callback(e, this.joypadBufferPtr);
   }
@@ -1406,7 +1430,7 @@ class Rewind {
     this.statePtr = this.module._rewind_begin(
       this.e,
       this.bufferPtr,
-      this.joypadBufferPtr
+      this.joypadBufferPtr,
     );
   }
 
@@ -1421,7 +1445,7 @@ class Rewind {
     if (!this.isRewinding) return;
     this.module._emulator_set_default_joypad_callback(
       this.e,
-      this.joypadBufferPtr
+      this.joypadBufferPtr,
     );
     this.module._rewind_end(this.statePtr);
     this.statePtr = 0;
