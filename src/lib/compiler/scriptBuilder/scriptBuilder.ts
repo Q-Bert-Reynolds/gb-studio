@@ -1897,6 +1897,62 @@ class ScriptBuilder extends ScriptBuilderBase {
   // --------------------------------------------------------------------------
   // Input
 
+  _keyboardKeyCode = (key: number) => {
+    if (!Number.isInteger(key) || key < 0 || key > 511) {
+      throw new Error("Invalid keyboard key code");
+    }
+    return key;
+  };
+
+  ifKeyboard = (
+    key: number,
+    truePath: ScriptEvent[] | ScriptBuilderPathFunction = [],
+    falsePath: ScriptEvent[] | ScriptBuilderPathFunction = [],
+  ) => {
+    const result = this._declareLocal("keyboard_held", 1, true);
+    const trueLabel = this.getNextLabel();
+    const endLabel = this.getNextLabel();
+    this._addComment("If Keyboard Key Held");
+    this._stackPushReference(result);
+    this._stackPushConst(this._keyboardKeyCode(key));
+    this._callNative("keyboard_held_native");
+    this._stackPop(2);
+    this._ifConst(".NE", result, 0, trueLabel, 0);
+    this._compilePath(falsePath);
+    this._jump(endLabel);
+    this._label(trueLabel);
+    this._compilePath(truePath);
+    this._label(endLabel);
+    this._addNL();
+  };
+
+  keyboardAwait = (key: number) => {
+    this._addComment("Wait For Keyboard Key Press");
+    this._stackPushConst(this._keyboardKeyCode(key));
+    this._invoke("keyboard_wait", 1, ".ARG0");
+    this._addNL();
+  };
+
+  keyboardScriptSet = (key: number, script: ScriptEvent[], symbol?: string) => {
+    this._addComment("Keyboard Script Attach");
+    const scriptRef = this._compileSubScript("input", script, symbol);
+    this._addBankedDataDependency(scriptRef);
+    this._stackPushConst(`_${scriptRef}`);
+    this._stackPushConst(`___bank_${scriptRef}`);
+    this._stackPushConst(this._keyboardKeyCode(key));
+    this._callNative("keyboard_attach_native");
+    this._stackPop(3);
+    this._addNL();
+  };
+
+  keyboardScriptRemove = (key: number) => {
+    this._addComment("Keyboard Script Remove");
+    this._stackPushConst(this._keyboardKeyCode(key));
+    this._callNative("keyboard_detach_native");
+    this._stackPop(1);
+    this._addNL();
+  };
+
   inputAwait = (input: string[]) => {
     this._addComment("Wait For Input");
     this._inputWait(inputDec(input));
