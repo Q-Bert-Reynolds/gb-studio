@@ -1897,6 +1897,101 @@ class ScriptBuilder extends ScriptBuilderBase {
   // --------------------------------------------------------------------------
   // Input
 
+  _pushTextArrayReference = (array: ScriptBuilderVariable) => {
+    const root = this._isVariableReference(array) ? array.value : array;
+    const alias = this.getVariableAlias(root);
+    if (this._isIndirectVariable(root)) this._stackPush(alias);
+    else this._stackPushReference(alias);
+  };
+
+  textInput = (
+    array: ScriptBuilderVariable,
+    result: ScriptBuilderVariable,
+    maximum = 16,
+    prompt = "",
+    filter: "text" | "numeric" | "alphanumeric" = "text",
+    uppercase = false,
+    password = false,
+  ) => {
+    this._assertArrayLengthAtLeast(array, 2);
+    const arrayRoot = this._isVariableReference(array) ? array.value : array;
+    const resultRoot = this._isVariableReference(result)
+      ? result.value
+      : result;
+    if (
+      this.getVariableAlias(arrayRoot) === this.getVariableAlias(resultRoot)
+    ) {
+      throw new Error("Text input result must be outside the text array");
+    }
+    if (!Number.isInteger(maximum) || maximum < 1 || maximum > 63) {
+      throw new Error("Text input maximum length must be between 1 and 63");
+    }
+    const capacity = Math.min(this._getArrayLength(array), 64);
+    const flags =
+      (filter === "numeric" ? 1 : filter === "alphanumeric" ? 2 : 0) |
+      (uppercase ? 4 : 0) |
+      (password ? 8 : 0);
+    this._addComment("Input Text Into Array");
+    this._vmLock();
+    this._overlayClear(0, 0, 20, 5, ".UI_COLOR_WHITE", true, false);
+    this._overlayMoveTo(0, 13, ".OVERLAY_IN_SPEED");
+    this._setTextLayer(".TEXT_LAYER_WIN");
+    // Literal ASCII avoids expanding text commands into the editing tile range.
+    const literalPrompt = (prompt || " ")
+      .replace(/[^\x20-\x7e]/g, " ")
+      .slice(0, 18)
+      .replace(/%/g, "%%");
+    this._loadText(0);
+    this._string(
+      Array.from(
+        literalPrompt,
+        (ch) => `\\${ch.charCodeAt(0).toString(8).padStart(3, "0")}`,
+      ).join(""),
+    );
+    this._displayText();
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._pushTextArrayReference(array);
+    this._stackPushConst(capacity);
+    this._stackPushConst(Math.min(maximum, capacity - 1));
+    this._stackPushConst(flags);
+    const resultAlias = this.getVariableAlias(result);
+    if (this._isIndirectVariable(result)) this._stackPush(resultAlias);
+    else this._stackPushReference(resultAlias);
+    this._invoke("keyboard_text_input", 5, ".ARG4");
+    this._overlayMoveTo(0, 18, ".OVERLAY_OUT_SPEED");
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._vmUnlock();
+    this._addNL();
+  };
+
+  textDisplayArray = (array: ScriptBuilderVariable) => {
+    const capacity = Math.min(this._getArrayLength(array), 64);
+    const offset = this._declareLocal("text_array_offset", 1, true);
+    const more = this._declareLocal("text_array_more", 1, true);
+    const pageLabel = this.getNextLabel();
+    this._addComment("Display Text From Array");
+    this._vmLock();
+    this._setConst(offset, 0);
+    this._overlayMoveTo(0, 14, ".OVERLAY_IN_SPEED");
+    this._setTextLayer(".TEXT_LAYER_WIN");
+    this._label(pageLabel);
+    this._overlayClear(0, 0, 20, 4, ".UI_COLOR_WHITE", true, false);
+    this._stackPushReference(more);
+    this._stackPushReference(offset);
+    this._stackPushConst(capacity);
+    this._pushTextArrayReference(array);
+    this._callNative("text_array_load_native");
+    this._stackPop(4);
+    this._displayText();
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._invoke("keyboard_text_wait", 0, ".ARG0");
+    this._ifConst(".NE", more, 0, pageLabel, 0);
+    this._overlayMoveTo(0, 18, ".OVERLAY_OUT_SPEED");
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._vmUnlock();
+    this._addNL();
+  };
+
   _keyboardKeyCode = (key: number) => {
     if (!Number.isInteger(key) || key < 0 || key > 511) {
       throw new Error("Invalid keyboard key code");
