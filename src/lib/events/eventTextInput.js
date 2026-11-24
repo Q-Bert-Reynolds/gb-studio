@@ -49,6 +49,13 @@ const fields = [
     defaultValue: false,
   },
   {
+    key: "showKeyboard",
+    label: l10n("FIELD_TEXT_INPUT_OSK"),
+    description: l10n("FIELD_TEXT_INPUT_OSK_DESC"),
+    type: "checkbox",
+    defaultValue: true,
+  },
+  {
     key: "password",
     label: l10n("FIELD_TEXT_INPUT_PASSWORD"),
     type: "checkbox",
@@ -79,6 +86,7 @@ module.exports = {
       input.filter || "text",
       !!input.uppercase,
       !!input.password,
+      input.showKeyboard !== false,
     ),
   waitUntilAfterInitFade: true,
 };

@@ -1912,6 +1912,7 @@ class ScriptBuilder extends ScriptBuilderBase {
     filter: "text" | "numeric" | "alphanumeric" = "text",
     uppercase = false,
     password = false,
+    showKeyboard = true,
   ) => {
     this._assertArrayLengthAtLeast(array, 2);
     const arrayRoot = this._isVariableReference(array) ? array.value : array;
@@ -1930,11 +1931,21 @@ class ScriptBuilder extends ScriptBuilderBase {
     const flags =
       (filter === "numeric" ? 1 : filter === "alphanumeric" ? 2 : 0) |
       (uppercase ? 4 : 0) |
-      (password ? 8 : 0);
+      (password ? 8 : 0) |
+      (showKeyboard ? 16 : 0);
     this._addComment("Input Text Into Array");
     this._vmLock();
-    this._overlayClear(0, 0, 20, 5, ".UI_COLOR_WHITE", true, false);
-    this._overlayMoveTo(0, 13, ".OVERLAY_IN_SPEED");
+    if (showKeyboard) this._overlayWait(true, [".UI_WAIT_TEXT"]);
+    this._overlayClear(
+      0,
+      0,
+      20,
+      showKeyboard ? 8 : 5,
+      ".UI_COLOR_WHITE",
+      true,
+      false,
+    );
+    this._overlayMoveTo(0, showKeyboard ? 10 : 13, ".OVERLAY_IN_SPEED");
     this._setTextLayer(".TEXT_LAYER_WIN");
     // Literal ASCII avoids expanding text commands into the editing tile range.
     const literalPrompt = (prompt || " ")
@@ -1948,8 +1959,10 @@ class ScriptBuilder extends ScriptBuilderBase {
         (ch) => `\\${ch.charCodeAt(0).toString(8).padStart(3, "0")}`,
       ).join(""),
     );
-    this._displayText();
-    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    if (!showKeyboard) {
+      this._displayText();
+      this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    }
     this._pushTextArrayReference(array);
     this._stackPushConst(capacity);
     this._stackPushConst(Math.min(maximum, capacity - 1));
