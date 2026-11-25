@@ -27,6 +27,13 @@
   "y": 32,
   "script": [
     {
+      "id": "7fe5f1cb-7a1c-4b03-a031-110ccb909662",
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "356d299c-bf40-4ffb-a390-2652058656c0"
+      }
+    },
+    {
       "id": "c80d20ea-1cbb-42f6-8a7a-e2d7e1f56eca",
       "command": "EVENT_CALL_CUSTOM_EVENT",
       "args": {

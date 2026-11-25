@@ -17,6 +17,13 @@
   "autoFadeSpeed": 1,
   "script": [
     {
+      "id": "48a1eabe-c973-4232-96e3-74fcc082f815",
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "356d299c-bf40-4ffb-a390-2652058656c0"
+      }
+    },
+    {
       "id": "fe077452-bd5b-486a-8bcf-871c8bface15",
       "command": "EVENT_ACTOR_DEACTIVATE",
       "args": {

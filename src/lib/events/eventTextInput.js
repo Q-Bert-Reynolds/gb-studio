@@ -56,6 +56,18 @@ const fields = [
     defaultValue: true,
   },
   {
+    key: "textLocation",
+    label: l10n("FIELD_TEXT_INPUT_TEXT_LAYER"),
+    description: l10n("FIELD_TEXT_INPUT_TEXT_LAYER_DESC"),
+    type: "select",
+    defaultValue: "overlay",
+    options: [
+      ["overlay", l10n("FIELD_OVERLAY")],
+      ["background", l10n("FIELD_BACKGROUND")],
+    ],
+    conditions: [{ key: "showKeyboard", ne: false }],
+  },
+  {
     key: "password",
     label: l10n("FIELD_TEXT_INPUT_PASSWORD"),
     type: "checkbox",
@@ -87,6 +99,7 @@ module.exports = {
       !!input.uppercase,
       !!input.password,
       input.showKeyboard !== false,
+      input.textLocation || "overlay",
     ),
   waitUntilAfterInitFade: true,
 };

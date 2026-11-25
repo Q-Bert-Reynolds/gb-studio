@@ -98,6 +98,22 @@
   "customControlsSelect": [
     "Shift"
   ],
+  "ps2KeyboardSupported": true,
+  "emulatorShortcutsEnabled": true,
+  "emulatorShortcuts": {
+    "pause": [],
+    "save-state": [],
+    "rewind": [],
+    "load-state": [],
+    "fullscreen": [],
+    "fast-forward": [],
+    "palette-prev": [
+      "LEFTBRACKET"
+    ],
+    "palette-next": [
+      "RIGHTBRACKET"
+    ]
+  },
   "colorMode": "mixed",
   "colorCorrection": "default",
   "generateDebugFilesEnabled": false,
@@ -107,7 +123,6 @@
   "runSceneSelectionOnly": false,
   "spriteMode": "8x16",
   "openBuildFolderOnExport": true,
-  "showRomUsageAfterBuild": false,
   "romFilename": "",
   "defaultSceneTypeId": "TOPDOWN",
   "disabledSceneTypeIds": [],

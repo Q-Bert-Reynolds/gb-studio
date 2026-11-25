@@ -1913,6 +1913,7 @@ class ScriptBuilder extends ScriptBuilderBase {
     uppercase = false,
     password = false,
     showKeyboard = true,
+    textLocation: "background" | "overlay" = "overlay",
   ) => {
     this._assertArrayLengthAtLeast(array, 2);
     const arrayRoot = this._isVariableReference(array) ? array.value : array;
@@ -1927,12 +1928,57 @@ class ScriptBuilder extends ScriptBuilderBase {
     if (!Number.isInteger(maximum) || maximum < 1 || maximum > 63) {
       throw new Error("Text input maximum length must be between 1 and 63");
     }
+    const backgroundText = showKeyboard && textLocation === "background";
+    if (
+      backgroundText &&
+      this.options.scene.background.tileset.data.length > 128 * 16
+    ) {
+      throw new Error(
+        "Background text input requires at most 128 background tiles in VRAM bank 0",
+      );
+    }
+    if (backgroundText) {
+      const scene = this.options.scene;
+      const spriteTileCount = (sprite: typeof scene.playerSprite) =>
+        Math.max(
+          sprite?.tileset.data.length ?? 0,
+          sprite?.cgbTileset?.data.length ?? 0,
+        ) / 16;
+      const spriteTiles =
+        Math.max(
+          spriteTileCount(scene.playerSprite),
+          scene.actorsExclusiveLookup.player ?? 0,
+        ) +
+        scene.sprites.reduce(
+          (sum, sprite) => sum + spriteTileCount(sprite),
+          0,
+        ) +
+        Object.entries(scene.actorsExclusiveLookup).reduce(
+          (sum, [actorId, tiles]) => {
+            if (actorId === "player") return sum;
+            const actor = scene.actors.find((actor) => actor.id === actorId);
+            const sprite = this.options.sprites.find(
+              (sprite) => sprite.id === actor?.spriteSheetId,
+            );
+            return sum + Math.max(tiles, spriteTileCount(sprite));
+          },
+          0,
+        );
+      // Leave four sprite tiles for an active emote before the preview's
+      // additional glyph tiles at 148..191 in the shared VRAM region.
+      if (spriteTiles > 144) {
+        throw new Error(
+          "Background text input requires at most 144 sprite tiles in VRAM bank 0",
+        );
+      }
+    }
     const capacity = Math.min(this._getArrayLength(array), 64);
     const flags =
       (filter === "numeric" ? 1 : filter === "alphanumeric" ? 2 : 0) |
       (uppercase ? 4 : 0) |
       (password ? 8 : 0) |
-      (showKeyboard ? 16 : 0);
+      (showKeyboard ? 16 : 0) |
+      (backgroundText ? 32 : 0);
     this._addComment("Input Text Into Array");
     this._vmLock();
     if (showKeyboard) this._overlayWait(true, [".UI_WAIT_TEXT"]);

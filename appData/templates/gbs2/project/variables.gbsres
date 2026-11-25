@@ -4,177 +4,225 @@
     {
       "id": "0",
       "name": "Quest1",
-      "symbol": "var_quest1"
+      "symbol": "var_quest1",
+      "type": "number"
     },
     {
       "id": "1",
       "name": "Quest2",
-      "symbol": "var_quest2"
+      "symbol": "var_quest2",
+      "type": "number"
     },
     {
       "id": "2",
       "name": "Quest3",
-      "symbol": "var_quest3"
+      "symbol": "var_quest3",
+      "type": "number"
     },
     {
       "id": "3",
       "name": "Quest4",
-      "symbol": "var_quest4"
+      "symbol": "var_quest4",
+      "type": "number"
     },
     {
       "id": "4",
       "name": "Quest5",
-      "symbol": "var_quest5"
+      "symbol": "var_quest5",
+      "type": "number"
     },
     {
       "id": "5",
       "name": "Quest6",
-      "symbol": "var_quest6"
+      "symbol": "var_quest6",
+      "type": "number"
     },
     {
       "id": "6",
       "name": "Quest7",
-      "symbol": "var_quest7"
+      "symbol": "var_quest7",
+      "type": "number"
     },
     {
       "id": "7",
       "name": "Quest8",
-      "symbol": "var_quest8"
+      "symbol": "var_quest8",
+      "type": "number"
     },
     {
       "id": "8",
       "name": "Quest9",
-      "symbol": "var_quest9"
+      "symbol": "var_quest9",
+      "type": "number"
     },
     {
       "id": "9",
       "name": "Quest10",
-      "symbol": "var_quest10"
+      "symbol": "var_quest10",
+      "type": "number"
     },
     {
       "id": "10",
       "name": "Quest11",
-      "symbol": "var_quest11"
+      "symbol": "var_quest11",
+      "type": "number"
     },
     {
       "id": "11",
       "name": "Quest12",
-      "symbol": "var_quest12"
+      "symbol": "var_quest12",
+      "type": "number"
     },
     {
       "id": "12",
       "name": "Turnip Counter",
-      "symbol": "var_turnip_counter"
+      "symbol": "var_turnip_counter",
+      "type": "number"
     },
     {
       "id": "13",
       "name": "Seen Cat",
-      "symbol": "var_seen_cat"
+      "symbol": "var_seen_cat",
+      "type": "number"
     },
     {
       "id": "14",
       "name": "Used Radio",
-      "symbol": "var_used_radio"
+      "symbol": "var_used_radio",
+      "type": "number"
     },
     {
       "id": "15",
       "name": "Seen Duck",
-      "symbol": "var_seen_duck"
+      "symbol": "var_seen_duck",
+      "type": "number"
     },
     {
       "id": "16",
       "name": "Pushed Ice Block",
-      "symbol": "var_pushed_ice_block"
+      "symbol": "var_pushed_ice_block",
+      "type": "number"
     },
     {
       "id": "17",
       "name": "Music House Playing",
-      "symbol": "var_music_house_playing"
+      "symbol": "var_music_house_playing",
+      "type": "number"
     },
     {
       "id": "18",
       "name": "Health",
-      "symbol": "var_health"
+      "symbol": "var_health",
+      "type": "number"
     },
     {
       "id": "19",
       "name": "Weapon Cooldown",
-      "symbol": "var_weapon_cooldown"
+      "symbol": "var_weapon_cooldown",
+      "type": "number"
     },
     {
       "id": "871ea302-1cc1-463c-b9d7-530aac38fe81__L0",
       "name": "Spoken to gardener",
-      "symbol": "var_spoken_to_gardener"
+      "symbol": "var_spoken_to_gardener",
+      "type": "number"
     },
     {
       "id": "dee20f46-fcaa-4473-94b1-9817dbd99fd8__L0",
       "name": "Save Choice",
-      "symbol": "var_save_choice"
+      "symbol": "var_save_choice",
+      "type": "number"
     },
     {
       "id": "4159e95b-34e4-42e8-bf25-67f2078e804f__L0",
       "name": "Defeated",
-      "symbol": "var_defeated"
+      "symbol": "var_defeated",
+      "type": "number"
     },
     {
       "id": "2f01ca47-9361-4271-b1f2-75d55e85bf1f__L0",
       "name": "Defeated",
-      "symbol": "var_defeated_0"
+      "symbol": "var_defeated_0",
+      "type": "number"
     },
     {
       "id": "98159e3a-0bfe-44ec-8312-9dcef04c253f__L0",
       "name": "Defeated",
-      "symbol": "var_defeated_1"
+      "symbol": "var_defeated_1",
+      "type": "number"
     },
     {
       "id": "4912bee2-387a-472f-ae4f-6679b6149517__L0",
       "name": "Menu Choice",
-      "symbol": "var_menu_choice"
+      "symbol": "var_menu_choice",
+      "type": "number"
     },
     {
       "id": "02504caf-8b1c-42b1-986f-bf5014097aa6__L0",
       "name": "Playing",
-      "symbol": "var_playing_0"
+      "symbol": "var_playing_0",
+      "type": "number"
     },
     {
       "id": "b624beb1-cc63-4529-9f9e-4ad68beb09cb__L0",
       "name": "Playing",
-      "symbol": "var_playing"
+      "symbol": "var_playing",
+      "type": "number"
     },
     {
       "id": "94c18861-b352-4f49-a64d-52f2e3415077__L0",
       "name": "Waterfall Tile",
-      "symbol": "var_waterfall_tile"
+      "symbol": "var_waterfall_tile",
+      "type": "number"
     },
     {
       "id": "94c18861-b352-4f49-a64d-52f2e3415077__L1",
       "name": "WaterTile",
-      "symbol": "var_watertile"
+      "symbol": "var_watertile",
+      "type": "number"
     },
     {
       "id": "94c18861-b352-4f49-a64d-52f2e3415077__L2",
       "name": "Flower Tile",
-      "symbol": "var_flower_tile"
+      "symbol": "var_flower_tile",
+      "type": "number"
     },
     {
       "id": "5fa52cd0-57cd-414c-8b93-5601c6e9636f__L0",
       "name": "Defeated",
-      "symbol": "var_defeated_2"
+      "symbol": "var_defeated_2",
+      "type": "number"
     },
     {
       "id": "f7a4eebd-b698-459e-abba-a63a1366c99c__L0",
       "name": "Waterfall Tile",
-      "symbol": "var_waterfall_tile_0"
+      "symbol": "var_waterfall_tile_0",
+      "type": "number"
     },
     {
       "id": "f7a4eebd-b698-459e-abba-a63a1366c99c__L1",
       "name": "WaterTile",
-      "symbol": "var_watertile_0"
+      "symbol": "var_watertile_0",
+      "type": "number"
     },
     {
       "id": "f7a4eebd-b698-459e-abba-a63a1366c99c__L2",
       "name": "Flower Tile",
-      "symbol": "var_flower_tile_0"
+      "symbol": "var_flower_tile_0",
+      "type": "number"
+    },
+    {
+      "id": "84e23025-dbe4-464c-8154-7c7f2b0a08f9",
+      "name": "Keyboard Note",
+      "symbol": "var_keyboard_note",
+      "type": "array",
+      "length": 64
+    },
+    {
+      "id": "434caaeb-643e-408c-9d5f-dac35e830845",
+      "name": "Keyboard Note Confirmed",
+      "symbol": "var_keyboard_note_confirmed",
+      "type": "number"
     }
   ],
   "constants": []

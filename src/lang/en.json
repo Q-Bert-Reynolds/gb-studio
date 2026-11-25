@@ -555,6 +555,8 @@
   "FIELD_TEXT_INPUT_PASSWORD": "Hide Text With Asterisks",
   "FIELD_TEXT_INPUT_OSK": "Show On-Screen Keyboard",
   "FIELD_TEXT_INPUT_OSK_DESC": "Use the D-pad to select a key, A to type, B to erase, Start to confirm, and Select to change character pages. Aa changes case; #! changes pages; < and > move the text cursor; OK confirms; X cancels. Physical keyboard input also works when PS/2 support is enabled.",
+  "FIELD_TEXT_INPUT_TEXT_LAYER": "Text Layer",
+  "FIELD_TEXT_INPUT_TEXT_LAYER_DESC": "Keep the keyboard on the overlay and show the typed text there, or display the full text live on the background in a 16-column, 4-row area above the keyboard. Background mode requires at most 128 background tiles and 144 sprite tiles in VRAM bank 0 and restores the covered tilemap on exit.",
   "FIELD_TEXT_INPUT_RESULT": "Result Variable",
   "FIELD_TEXT_INPUT_RESULT_DESC": "1 = confirmed, 0 = cancelled, 2 = keyboard unavailable (when the on-screen keyboard is disabled). Use a variable outside the text array.",
   "FIELD_ENABLE_SGB": "Enable Super GB Mode",

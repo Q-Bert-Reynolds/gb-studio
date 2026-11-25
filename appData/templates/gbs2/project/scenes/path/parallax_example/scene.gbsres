@@ -48,6 +48,13 @@
   ],
   "script": [
     {
+      "id": "d2593e55-a284-423d-b84f-e9049df92183",
+      "command": "EVENT_CALL_CUSTOM_EVENT",
+      "args": {
+        "customEventId": "356d299c-bf40-4ffb-a390-2652058656c0"
+      }
+    },
+    {
       "id": "a0f6f228-cf76-4e25-8f8a-f880cdc0d8b8",
       "command": "EVENT_CALL_CUSTOM_EVENT",
       "args": {

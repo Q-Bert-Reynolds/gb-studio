@@ -1,0 +1,51 @@
+{
+  "_resourceType": "script",
+  "id": "356d299c-bf40-4ffb-a390-2652058656c0",
+  "name": "common/ui/Init Keyboard",
+  "symbol": "script_init_keyboard",
+  "description": "Enable the keyboard and attach the note editor to F1. Call on every scene init because keyboard scripts reset on scene changes.",
+  "variables": {},
+  "actors": {},
+  "script": [
+    {
+      "id": "7bf95feb-b2ed-4622-a0da-efd260b00861",
+      "command": "EVENT_KEYBOARD",
+      "args": {
+        "operation": "enable"
+      }
+    },
+    {
+      "id": "2696ecf0-e209-4a65-ad60-5070ce8d6aa5",
+      "command": "EVENT_SET_KEYBOARD_SCRIPT",
+      "args": {
+        "keyCode": 5
+      },
+      "children": {
+        "true": [
+          {
+            "id": "77d8620c-b131-4fdb-b4ce-3221c71af652",
+            "command": "EVENT_SCENE_PUSH_STATE",
+            "args": {}
+          },
+          {
+            "id": "e06dbff4-366c-4cdb-a0f9-85fcd6716b8d",
+            "command": "EVENT_SWITCH_SCENE",
+            "args": {
+              "sceneId": "c1aaa42c-9827-4375-941a-df10f68a169a",
+              "x": {
+                "type": "number",
+                "value": 0
+              },
+              "y": {
+                "type": "number",
+                "value": 0
+              },
+              "direction": "",
+              "fadeSpeed": "2"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

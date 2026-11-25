@@ -1,0 +1,84 @@
+{
+  "_resourceType": "scene",
+  "id": "c1aaa42c-9827-4375-941a-df10f68a169a",
+  "_index": 17,
+  "type": "TOPDOWN",
+  "name": "ui/Keyboard Notes",
+  "symbol": "scene_keyboard_notes",
+  "notes": "Press F1 in any other scene to edit a note. Type with a keyboard or use D-pad + A. B deletes, Select changes the keyboard page, and Start/Enter saves. Escape or the on-screen cancel key returns without changing the note. The 64-element global array holds 63 characters plus a terminator and persists between visits.",
+  "x": 1216,
+  "y": 936,
+  "width": 20,
+  "height": 18,
+  "backgroundId": "499a60c0-4832-4c30-93bb-019b2b01cd46",
+  "tilesetId": "",
+  "colorModeOverride": "none",
+  "paletteIds": [
+    "default-ui"
+  ],
+  "spritePaletteIds": [],
+  "autoFadeSpeed": 1,
+  "script": [
+    {
+      "id": "9276acc9-743b-4983-a1cf-aa707aae7602",
+      "command": "EVENT_REMOVE_KEYBOARD_SCRIPT",
+      "args": {
+        "keyCode": 5
+      }
+    },
+    {
+      "id": "6ede264c-6cc1-481f-859b-5441b493c9fb",
+      "command": "EVENT_ACTOR_DEACTIVATE",
+      "args": {
+        "actorId": "player"
+      }
+    },
+    {
+      "id": "8c06fd14-d1fc-4e10-890a-3159a3d24ccb",
+      "command": "EVENT_TEXT_INPUT",
+      "args": {
+        "array": "84e23025-dbe4-464c-8154-7c7f2b0a08f9",
+        "result": "434caaeb-643e-408c-9d5f-dac35e830845",
+        "maximum": 63,
+        "prompt": "Note (63 chars)",
+        "filter": "text",
+        "uppercase": false,
+        "password": false,
+        "showKeyboard": true,
+        "textLocation": "background"
+      }
+    },
+    {
+      "id": "19b1cd1a-498d-44a8-9218-137c1ed5a767",
+      "command": "EVENT_IF_VALUE",
+      "args": {
+        "variable": "434caaeb-643e-408c-9d5f-dac35e830845",
+        "operator": "==",
+        "comparator": 1
+      },
+      "children": {
+        "true": [
+          {
+            "id": "898b34fd-83cd-46dd-99fe-cfd541dd3943",
+            "command": "EVENT_TEXT_DISPLAY_ARRAY",
+            "args": {
+              "array": "84e23025-dbe4-464c-8154-7c7f2b0a08f9"
+            }
+          }
+        ],
+        "false": []
+      }
+    },
+    {
+      "id": "99ca2044-960f-48c6-9159-4c7a981da213",
+      "command": "EVENT_SCENE_POP_STATE",
+      "args": {
+        "fadeSpeed": "2"
+      }
+    }
+  ],
+  "playerHit1Script": [],
+  "playerHit2Script": [],
+  "playerHit3Script": [],
+  "collisions": ""
+}
