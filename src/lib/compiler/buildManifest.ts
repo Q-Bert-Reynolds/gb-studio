@@ -32,7 +32,12 @@ export const resolveBuildSources = async (
   buildRoot: string,
   attribution: PluginFileAttribution,
 ): Promise<BuildSource[]> => {
-  const sourceFiles = await glob("src/**/*.@(c|s)", { cwd: buildRoot });
+  // Game Boy and Pocket builds share the GB implementation. The engine also
+  // ships Game Gear implementations, which must not be compiled alongside it.
+  const sourceFiles = await glob("src/**/*.@(c|s)", {
+    cwd: buildRoot,
+    ignore: ["src/gg/**", "src/core/gg/**", "src/states/gg/**"],
+  });
 
   const sources = sourceFiles.map((sourceFile) => {
     const sourcePath = pathToPosix(sourceFile);

@@ -18,6 +18,8 @@ import { EngineSchema } from "lib/project/loadEngineSchema";
 import { pathToPosix } from "shared/lib/helpers/path";
 import { applyEnginePlugins } from "lib/compiler/enginePlugins";
 
+import { compileKeyboard, compileKeyboardTiles } from "./compileKeyboard";
+
 const engineIgnore = [
   ".git",
   "examples",
@@ -154,6 +156,19 @@ const ejectBuild = async ({
     projectRoot,
     unusedFiles,
   });
+
+  const keyboard = await compileKeyboard(projectRoot);
+  if (keyboard !== undefined) {
+    await fs.writeFile(
+      Path.join(outputRoot, "include/keyboard_layout.h"),
+      keyboard,
+    );
+  }
+
+  await fs.writeFile(
+    Path.join(outputRoot, "include/keyboard_tiles.h"),
+    await compileKeyboardTiles(projectRoot),
+  );
 
   // Modify engineField defines for any engine fields that define a "file" field
   await Promise.all(

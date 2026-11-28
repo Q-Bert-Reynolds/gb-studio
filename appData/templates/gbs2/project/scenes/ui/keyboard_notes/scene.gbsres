@@ -1,0 +1,103 @@
+{
+  "_resourceType": "scene",
+  "id": "c1aaa42c-9827-4375-941a-df10f68a169a",
+  "_index": 17,
+  "type": "TOPDOWN",
+  "name": "ui/Keyboard Notes",
+  "symbol": "scene_keyboard_notes",
+  "notes": "Open Notes from the title-screen menu to edit a note. D-pad selects keys, A types, B deletes, Start saves, and Select toggles shift (double-tap to lock). The on-screen X cancels the current edit and returns to the title screen without changing the stored note. Text updates live on the background above the keyboard.",
+  "x": 1216,
+  "y": 936,
+  "width": 20,
+  "height": 18,
+  "backgroundId": "499a60c0-4832-4c30-93bb-019b2b01cd46",
+  "tilesetId": "",
+  "colorModeOverride": "none",
+  "paletteIds": [
+    "default-ui"
+  ],
+  "spritePaletteIds": [],
+  "autoFadeSpeed": 1,
+  "script": [
+    {
+      "id": "6ede264c-6cc1-481f-859b-5441b493c9fb",
+      "command": "EVENT_ACTOR_DEACTIVATE",
+      "args": {
+        "actorId": "player"
+      }
+    },
+    {
+      "id": "3846f5f4-d2ba-49a7-abe1-901fa0a9014a",
+      "command": "EVENT_LOOP",
+      "args": {},
+      "children": {
+        "true": [
+          {
+            "id": "8c06fd14-d1fc-4e10-890a-3159a3d24ccb",
+            "command": "EVENT_TEXT_INPUT",
+            "args": {
+              "array": "84e23025-dbe4-464c-8154-7c7f2b0a08f9",
+              "result": "434caaeb-643e-408c-9d5f-dac35e830845",
+              "maximum": 63,
+              "filter": "text",
+              "uppercase": false,
+              "password": false,
+              "textLocation": "background"
+            }
+          },
+          {
+            "id": "19b1cd1a-498d-44a8-9218-137c1ed5a767",
+            "command": "EVENT_IF",
+            "args": {
+              "condition": {
+                "type": "eq",
+                "valueA": {
+                  "type": "variable",
+                  "value": "434caaeb-643e-408c-9d5f-dac35e830845"
+                },
+                "valueB": {
+                  "type": "number",
+                  "value": 1
+                }
+              }
+            },
+            "children": {
+              "true": [
+                {
+                  "id": "898b34fd-83cd-46dd-99fe-cfd541dd3943",
+                  "command": "EVENT_TEXT_DISPLAY_ARRAY",
+                  "args": {
+                    "array": "84e23025-dbe4-464c-8154-7c7f2b0a08f9"
+                  }
+                }
+              ],
+              "false": [
+                {
+                  "id": "313caa50-ef9b-449f-bb07-1e61284e41d7",
+                  "command": "EVENT_SWITCH_SCENE",
+                  "args": {
+                    "sceneId": "4912bee2-387a-472f-ae4f-6679b6149517",
+                    "x": {
+                      "type": "number",
+                      "value": 0
+                    },
+                    "y": {
+                      "type": "number",
+                      "value": 0
+                    },
+                    "direction": "down",
+                    "fadeSpeed": "4"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "playerHit1Script": [],
+  "playerHit2Script": [],
+  "playerHit3Script": [],
+  "collisions": ""
+}

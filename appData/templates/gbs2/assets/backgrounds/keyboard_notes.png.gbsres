@@ -1,0 +1,13 @@
+{
+  "_resourceType": "background",
+  "id": "499a60c0-4832-4c30-93bb-019b2b01cd46",
+  "name": "keyboard_notes",
+  "symbol": "bg_keyboard_notes",
+  "tileColors": "",
+  "filename": "keyboard_notes.png",
+  "width": 20,
+  "height": 18,
+  "imageWidth": 160,
+  "imageHeight": 144,
+  "autoColor": false
+}

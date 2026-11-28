@@ -1897,6 +1897,128 @@ class ScriptBuilder extends ScriptBuilderBase {
   // --------------------------------------------------------------------------
   // Input
 
+  _pushTextArrayReference = (array: ScriptBuilderVariable) => {
+    const root = this._isVariableReference(array) ? array.value : array;
+    const alias = this.getVariableAlias(root);
+    if (this._isIndirectVariable(root)) this._stackPush(alias);
+    else this._stackPushReference(alias);
+  };
+
+  textInput = (
+    array: ScriptBuilderVariable,
+    result: ScriptBuilderVariable,
+    maximum = 16,
+    _prompt = "",
+    filter: "text" | "numeric" | "alphanumeric" = "text",
+    uppercase = false,
+    password = false,
+    textLocation: "background" | "overlay" = "overlay",
+  ) => {
+    this._assertArrayLengthAtLeast(array, 2);
+    const arrayRoot = this._isVariableReference(array) ? array.value : array;
+    const resultRoot = this._isVariableReference(result)
+      ? result.value
+      : result;
+    if (
+      this.getVariableAlias(arrayRoot) === this.getVariableAlias(resultRoot)
+    ) {
+      throw new Error("Text input result must be outside the text array");
+    }
+    if (!Number.isInteger(maximum) || maximum < 1 || maximum > 63) {
+      throw new Error("Text input maximum length must be between 1 and 63");
+    }
+    const backgroundText = textLocation === "background";
+    if (this.options.scene.background.tileset.data.length > 128 * 16) {
+      throw new Error(
+        "Text input requires at most 128 background tiles in VRAM bank 0",
+      );
+    }
+    {
+      const scene = this.options.scene;
+      const spriteTileCount = (sprite: typeof scene.playerSprite) =>
+        Math.max(
+          sprite?.tileset.data.length ?? 0,
+          sprite?.cgbTileset?.data.length ?? 0,
+        ) / 16;
+      const spriteTiles =
+        Math.max(
+          spriteTileCount(scene.playerSprite),
+          scene.actorsExclusiveLookup.player ?? 0,
+        ) +
+        scene.sprites.reduce(
+          (sum, sprite) => sum + spriteTileCount(sprite),
+          0,
+        ) +
+        Object.entries(scene.actorsExclusiveLookup).reduce(
+          (sum, [actorId, tiles]) => {
+            if (actorId === "player") return sum;
+            const actor = scene.actors.find((actor) => actor.id === actorId);
+            const sprite = this.options.sprites.find(
+              (sprite) => sprite.id === actor?.spriteSheetId,
+            );
+            return sum + Math.max(tiles, spriteTileCount(sprite));
+          },
+          0,
+        );
+      // Reserve tiles 140..191 for keyboard glyphs, leaving four emote tiles.
+      if (spriteTiles > 136) {
+        throw new Error(
+          "Text input requires at most 136 sprite tiles in VRAM bank 0",
+        );
+      }
+    }
+    const capacity = Math.min(this._getArrayLength(array), 64);
+    const flags =
+      (filter === "numeric" ? 1 : filter === "alphanumeric" ? 2 : 0) |
+      (uppercase ? 4 : 0) |
+      (password ? 8 : 0) |
+      (backgroundText ? 16 : 0);
+    this._addComment("Input Text Into Array");
+    this._vmLock();
+    this._overlayWait(true, [".UI_WAIT_TEXT"]);
+    this._setTextLayer(".TEXT_LAYER_WIN");
+    this._pushTextArrayReference(array);
+    this._stackPushConst(capacity);
+    this._stackPushConst(Math.min(maximum, capacity - 1));
+    this._stackPushConst(flags);
+    const resultAlias = this.getVariableAlias(result);
+    if (this._isIndirectVariable(result)) this._stackPush(resultAlias);
+    else this._stackPushReference(resultAlias);
+    this._invoke("text_input_run", 5, ".ARG4");
+    this._overlayMoveTo(0, 18, ".OVERLAY_OUT_SPEED");
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._vmUnlock();
+    this._addNL();
+  };
+
+  textDisplayArray = (array: ScriptBuilderVariable) => {
+    const capacity = Math.min(this._getArrayLength(array), 64);
+    const offset = this._declareLocal("text_array_offset", 1, true);
+    const more = this._declareLocal("text_array_more", 1, true);
+    const pageLabel = this.getNextLabel();
+    this._addComment("Display Text From Array");
+    this._vmLock();
+    this._setConst(offset, 0);
+    this._overlayMoveTo(0, 14, ".OVERLAY_IN_SPEED");
+    this._setTextLayer(".TEXT_LAYER_WIN");
+    this._label(pageLabel);
+    this._overlayClear(0, 0, 20, 4, ".UI_COLOR_WHITE", true, false);
+    this._stackPushReference(more);
+    this._stackPushReference(offset);
+    this._stackPushConst(capacity);
+    this._pushTextArrayReference(array);
+    this._callNative("vm_load_text_array");
+    this._stackPop(4);
+    this._displayText();
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._invoke("text_input_wait", 0, ".ARG0");
+    this._ifConst(".NE", more, 0, pageLabel, 0);
+    this._overlayMoveTo(0, 18, ".OVERLAY_OUT_SPEED");
+    this._overlayWait(true, [".UI_WAIT_WINDOW", ".UI_WAIT_TEXT"]);
+    this._vmUnlock();
+    this._addNL();
+  };
+
   inputAwait = (input: string[]) => {
     this._addComment("Wait For Input");
     this._inputWait(inputDec(input));
